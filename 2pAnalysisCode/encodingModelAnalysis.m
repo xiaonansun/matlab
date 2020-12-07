@@ -57,3 +57,5 @@ for i = 1:length(betaIdx)
     imagesc(regBeta(iM(:,2),:),[median(regBeta(:))-rho*std(regBeta(:)) median(regBeta(:))+rho*std(regBeta(:))]);
     title(regLabels{betaIdx(i)});
 end
+
+
