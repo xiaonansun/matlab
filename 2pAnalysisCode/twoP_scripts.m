@@ -1,201 +1,193 @@
 % function twoP_scripts(animal,session)
 % mfilename('fullpath')
 %% Load trial-aligned fluorescence data
-% clear all; close all;
+clear animal session data npy SessionData events; close all;
 
 % Specify session to load
 animal = 'CSP27';
-session = '20200329';
-analysisFileName = [animal '_' session];
-addpath(genpath('C:\Users\Xiaonan Richard Sun\Dropbox\Users\Richard\matlab\2pAnalysisCode'));
+session = '20200321a';
 
-% Define directories
-if convertCharsToStrings(getenv('COMPUTERNAME')) == convertCharsToStrings('MANHASSET')
-    imagingRootDir = 'G:\2PData';
-else
-%     imagingRootDir = '\\churchlandNAS\homes\DOMAIN=CSHL\smusall\suite2p';
-    imagingRootDir = '\\grid-hs\churchland_nlsas_data\data\richard_s2p_npy';
-%     imagingRootDir = 'F:\suite2p';
-    disp('Loading suite2p data...');
+baseFileName = [animal '_' session];
+
+[npy,data,SessionData,bhvFilePath,suite2pDir]=twoP_loadImgBhvData(animal,session, true, 10);
+
+% ----- Makes adjustments to the twoP data struct ----- %%
+data = twoP_adjustData(data,SessionData);
+
+% ----- Define event-aligned matrices ----- %%
+[lick,data.lickWinIdx,data.lickWinMs,data.dataLick, data.dataLickTrialNumbers]=twoP_alignToLick(data, SessionData);
+
+% ----- Behavior analysis----- %%
+% events =SessionData.stimEvents;
+% % organize stimulus events of each trial (row) into columns: column 1 is
+% % left and column 2 is right
+% events = cellfun(@(x) x{:},[cellfun(@(x) x(1),events,'UniformOutput',false)' cellfun(@(x) x(2),events,'UniformOutput',false)'],'UniformOutput',false); % In this line, we count the number of auditory events emerging from the left or right speakers and report them in two columns (column 1 for left and 2 for right)
+% frEvents= cellfun(@numel,events);
+
+E = behavior_getStimEvents(SessionData); events = E.events; frEvents = E.frEvents; ratioEvents = E.ratioEvents;
+% frEvents(:,4)=(SessionData.CorrectSide)';
+% frEvents(:,5)=(SessionData.DistStim)'; % distractor
+
+%% Logistic regression decoder 
+
+% [cvAcc, bMaps, trialCnt] = rateDisc_logDecoder(data, U, bhv, useTrials, targMod, regType, stepSize, decType)
+% useTrials: 400 trials is default, can be adjusted, fewer trials will reduce the accuracy of the decoder
+% stepSize: will downsample data
+% decType: the type of decoder, default is allchoice
+% Vc: neural data neurons x frame x trial
+% cBhv: SessionData (Behai vior data aka bpod output)
+% segFrames: defined at the top of this cell
+% opts: struct defined at the top of this cell
+
+% dbstop if error
+
+lr = twoP_logisticRegression(animal, session, data, SessionData, true, true); %% the last variable, if true, loads existing logstic regression data
+
+cBhv = selectBehaviorTrials(SessionData, data.trialNumbers); %% very important in matching trial indices
+
+%% 
+
+close all;
+
+Vc = lr.Vc; Vc_nr = lr.Vc_nr; Vc_r = lr.Vc_r;
+peth.mVc = twoP_sortROIbyActivity(mean(Vc,3,'omitnan'),[],'sgolay',1);
+peth.mVc_nr = twoP_sortROIbyActivity(mean(Vc_nr,3,'omitnan'),[],'sgolay',1);
+peth.mVc_r = twoP_sortROIbyActivity(mean(Vc_r,3,'omitnan'),[],'sgolay',1);
+
+fig = figure(1);
+fig.Position = [100,100,400,800];
+
+tiledlayout(4,1,...
+    'TileSpacing','none');
+nexttile([3 1]); 
+imagesc([peth.mVc_r; peth.mVc_nr]); hold on;
+yline(size(peth.mVc_r,1),'-w');
+xline(lr.segFrames+1,'-w');
+ax = fig.CurrentAxes; ax.XTick = [];
+
+nexttile
+plot(mean(peth.mVc,1),'-k'); hold on;
+plot(mean(peth.mVc_nr,1),'-g');
+plot(mean(peth.mVc_r,1),'-r');
+
+xlim([1 size(Vc,2)]);
+xline(lr.segFrames+1,'-k');
+ax = fig.CurrentAxes;
+ax = fig_configAxis(ax);
+% figure(2);
+% plot(mean(twoP_sortROIbyActivity(mean(Vc,3))));
+% imagesc(mean(Vc,3))
+
+%% Correlations (noise and signal)
+
+easyL = squeeze(sum(data.neural(:,data.trialStimFrame:data.trialStimFrame+round(1000/data.msPerFrame),ratioEvents==0),2));
+easyR = squeeze(sum(data.neural(:,data.trialStimFrame:data.trialStimFrame+round(1000/data.msPerFrame),ratioEvents==1),2));
+easyLr = easyL(data.idx_redcell,:);
+easyLnr = easyL(data.idx_notredcell,:);
+easyLsorted = [easyLr;easyLnr];
+% easyL = easyLr; clear easyLr;
+
+R_L=corrcoef(easyL');
+R_Lr = corrcoef(easyLr');
+R_Lnr = corrcoef(easyLnr');
+R_Lsorted=corrcoef(easyLsorted');
+
+% Red cells
+R_Lr_upper = triu(R_Lr,1); R_Lr_upper(R_Lr_upper ==0) = NaN;
+R_Lr_upper_vec = reshape(R_Lr_upper,[size(R_Lr,1)*size(R_Lr_upper,2),1]);
+R_Lr_upper_vec(isnan(R_Lr_upper))=[];
+
+% Non-red cells
+R_Lnr_upper = triu(R_Lnr,1); R_Lnr_upper(R_Lnr_upper ==0) = NaN;
+R_Lnr_upper_vec = reshape(R_Lnr_upper,[size(R_Lnr,1)*size(R_Lnr_upper,2),1]);
+R_Lnr_upper_vec(isnan(R_Lnr_upper))=[];
+
+% Calculate distance between cells
+M_dist = zeros(size(R_L,1),size(R_L,2));
+for i = 1:size(R_L,1)
+    for j = 1:size(R_L,2)
+        M_dist(i,j)=pdist2(npy.stat{i}.med,npy.stat{j}.med);
+    end
 end
-imagingSubDir = 'suite2p\plane0';
 
-disp(['Animal: ' animal '; Session: ' session]);
+histogram(M_dist(:))
 
-% --- Load the google sheets document "2photon acquisition record" --- %
-docid = '1ADcwZJygK7fV0zOq537V1Vsyv45-OF3WkMopNbjFifY';
-expTable=GetGoogleSpreadsheet(docid); % this function (GetGoogleSpreadsheet.m) needs to be downloaded
-bhvColIdx=find(contains(expTable(1,:),'Behavior file name'));
-iFolderColIdx=find(contains(expTable(1,:),'Folder'));
-try
-bhvRowIdx = find(contains(expTable(:,iFolderColIdx),session));
-bhvFName = expTable{bhvRowIdx(contains(expTable(bhvRowIdx),animal)),bhvColIdx};
-catch ME
-    disp([ME.message]);
-    disp('Cannot load session. Please check the session name input.');
-    analysis.error.behaviorTable = ME.message;
+figure(1)
+imagesc(R_L);
+
+figure(2)
+imagesc(R_Lsorted);
+
+figure(3)
+imagesc(R_Lr);
+
+figure(4)
+imagesc(R_Lr_upper)
+
+figure(5)
+imagesc(R_Lnr_upper)
+
+figure(6)
+histogram(R_Lr_upper_vec,'NumBins',30,'Normalization','pdf'); hold on;
+histogram(R_Lnr_upper_vec,'Normalization','pdf');
+
+%% Compute basic firing rate statistics
+sPF = data.msPerFrame/1000;
+tVec = sPF:sPF:sPF*size(npy.spks,2);
+tVecRounded = floor(tVec);
+for i = 0:max(tVecRounded)-1
+    spksPerSec(:,i+1) = sum(npy.spks(:,tVecRounded==i),2);
 end
 
-analysisDir = 'C:\Users\Xiaonan Richard Sun\Dropbox\Users\Richard\matlab\twoP_analysis'; %directory of the analysis history summary file
-load([analysisDir filesep 'analysis.mat']); % load the analysis history summary file
-currentDate=datestr(now,'yyyy-mm-dd_HHMMss'); currAnalIdx=length(analysis)+1; % append data of the current analysis to the summary file
+% Compute the number of one-second bins of individual neurons for which
+% there is no neural activity (spks = 0)
+noActivity = sum(spksPerSec==0,2);
+histogram(noActivity(npy.iscell(:,1)==1 & npy.redcell(:,1)==0),'Normalization','pdf');
+hold on; 
+histogram(noActivity(npy.iscell(:,1)==1 & npy.redcell(:,1)==1),'Normalization','pdf');
 
-fprintf('Loading 2P imaging data...');
-npy = twoP_importSuite2pData(animal,session, imagingRootDir); % organize suite2p data into npy files (ROI and spiking)
-spks = smoothCol(npy.spks,2,10,'gauss');
-try
-data = twoP_alignDetectionTask(npy.ops, spks, npy.iscell, npy.redcell, npy.bin_MScan_filepath); % align suite2p data to sensory stimulus
-catch ME
-end
+spksPerSecNRV = reshape(spksPerSec(npy.iscell(:,1)==1 & npy.redcell(:,1)==0,:), 1,sum(npy.iscell(:,1)==1 & npy.redcell(:,1)==0)*size(spksPerSec,2));
+spksPerSecRV = reshape(spksPerSec(npy.iscell(:,1)==1 & npy.redcell(:,1)==1,:), 1,sum(npy.iscell(:,1)==1 & npy.redcell(:,1)==1)*size(spksPerSec,2));
+histogram(spksPerSecNRV(spksPerSecNRV>0),500,'Normalization','cdf');
+hold on;
+h= histogram(spksPerSecRV(spksPerSecRV>0),500,'Normalization','cdf');
 
-if exist('ME','var')
-    disp(['Error detected: ' ME.identifier '. ' ME.message])
-else
-    disp('2P DATA LOADED!');
-end
-
-% Load behavior data
-fprintf('Loading behavior data...');
-[SessionData,bhvFilePath] = twoP_loadBehaviorSession(animal,session,bhvFName); SessionData = SessionData.SessionData;
-% [filepath,bhvFileName,ext]=fileparts(bhvFilePath); clear filepath ext;
-fprintf('DONE!\n');
-
-disp(['Directory of suite2p output: ' fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir)]);
-disp(['Path of behavior data: ' bhvFilePath]);
-disp(['Number of trials recorded by 2P imaging: ' num2str(max(data.trialNumbers))]);
-disp(['Number of trials included (not rejected) in neural data matrix: ' num2str(length(data.trialNumbers))]);
-disp(['Number of trials recorded by Bpod: ' num2str(length(SessionData.Rewarded))]);
-if abs(max(data.trialNumbers) -length(SessionData.Rewarded)) >= 10; disp('Behavior and imaging differs by more than 10 trials: do you have the correct behavior file?'); end;
-
-analysis(currAnalIdx).date=currentDate;
-analysis(currAnalIdx).animal=animal; analysis(currAnalIdx).session=session;
-if exist('ME','var')
-analysis(currAnalIdx).errors=ME.message;
-end
-analysis(currAnalIdx).twopRecordedTrials=max(data.trialNumbers);
-analysis(currAnalIdx).twopAlignedDataTrials = length(data.trialNumbers);
-analysis(currAnalIdx).bpodTrials = length(SessionData.Rewarded);
-save([analysisDir filesep 'analysis.mat'],'analysis'); % save a historical record of this analysis script that has been run
-writetable(struct2table(analysis),[analysisDir filesep 'analysis.csv'])
-
-%% makes adjustments to data struct
-
-% Discard extra trials recorded by the two-photon, usually this is one extra trial at the end of the session
-if length(data.trialNumbers) < size(data.neural,3) 
-    disp(['Note: there are ' num2str(size(data.neural,3) - length(data.trialNumbers)) ' fewer trial ID(s) compared to the number of trials in the neural data array.'])
-    delIdx = find(~ismember(1:1:size(data.neural,3), 1:1:length(data.trialNumbers)));
-    data.neural(:,:,delIdx)=[];
-    data.stimFramesOrig(delIdx)=[];
-    data.DS(:,:,delIdx)=[];
-    data.stimSamplesOrig(delIdx)=[];
-    data.analog(:,:,delIdx)=[];
-end
-% Compares the number of imaging trials to the the number of trials recorded in the behavior data and discard extra imaging trials
-if max(data.trialNumbers) > length(SessionData.Rewarded) 
-    disp(['Note: ' num2str(max(data.trialNumbers) - length(SessionData.Rewarded)) ' additional trial(s) were recorded during imaging than during behavior training.'])
-    data.trialNumbersOrig = data.trialNumbers;
-    delIdx = find(~ismember(data.trialNumbers, 1:1:length(SessionData.Rewarded)));
-    data.trialNumbers(delIdx)=[];
-    data.neural(:,:,delIdx)=[];
-    data.stimFramesOrig(delIdx)=[];
-    data.DS(:,:,delIdx)=[];
-    data.stimSamplesOrig(delIdx)=[];
-    data.analog(:,:,delIdx)=[];
-end
-
-%% Define event-aligned matrices
-fps=1000/data.msPerFrame; % frames per second
-stdThresh=2.5; % Reject delayed lick responses above a threshold, expressed in units of standard deviations from the mean
-filterWin = 600; % length of smoothing filter in milliseconds
-minLicks=2; % minimum number of licks required to qualify as a response
-stimOnsetIdx=find(data.neuralTimes==0); % frame index on which stimulus initiates
-filterFrames = round(filterWin/data.msPerFrame); % number of frames used for the smoothing filter as specified by the time constant in line above
-[stimTime, spoutTime, lickR, lickL, water]=behavior_findEventTiming(SessionData); %Use the findEventTiming function to extract the timing of stimulus onset, spout movement, and licks.
-stimTime=stimTime(data.trialNumbers);
-if SessionData.nTrials > length(water); water=[water zeros(1,SessionData.nTrials-length(water))]; end
-water=water(data.trialNumbers);
-if length(SessionData.Rewarded) > length(lickR); lickR = [lickR num2cell(zeros(1,SessionData.nTrials-length(lickR)))]; end % repairs trial count mismatch
-if length(SessionData.Rewarded) > length(lickL); lickL = [lickL num2cell(zeros(1,SessionData.nTrials-length(lickL)))]; end % repairs trial count mismatch
-lickR=lickR(data.trialNumbers); lickL=lickL(data.trialNumbers); % only include trials with imaging data that can be analyzed
-
-lick= zeros(3,length(data.trialNumbers));
-
-% Generate a row of response side: 1 is left and 2 is right
-lick(1,:) = SessionData.ResponseSide(data.trialNumbers);
-
-% Generate a row of the timing (in seconds) of the first lick event
-% relative to trial onset
-leftLickIdx=find(cellfun(@numel,lickL)>=minLicks);
-rightLickIdx=find(cellfun(@numel,lickR)>=minLicks);
-[val, ir, il]=intersect(rightLickIdx,leftLickIdx);
-rightLickIdx(ir)=[]; leftLickIdx(il)=[]; % remove trials where the animal licked both spouts more than once
-leftLickTiming=cellfun(@(x)x(1),lickL((leftLickIdx)));
-rightLickTiming=cellfun(@(x)x(1),lickR(rightLickIdx)); %compute the timing of left or right licks
-lick(2,leftLickIdx)=leftLickTiming; lick(2,rightLickIdx)=rightLickTiming; % compute the timing of the first lick of a true lick response
-lick(2,lick(2,:)==0)=NaN;
-lick(2,lick(2,:)>nanmean(lick(2,:))+nanstd(lick(2,:))*stdThresh)=NaN;
-
-% compute the timing of the first lick of a true lick response relative to
-% the onset of the sensory stimulus
-lick(3,:)=lick(2,:)-stimTime;
-
-% Compute the time index of the first lick
-lick(4,:)= round(lick(3,:)*fps)+stimOnsetIdx;
-maxPostLickIdx=max(length(data.neuralTimes)-lick(4,:));
-
-lick(5,:)= data.trialNumbers; % Trial ID
-lick(6,:)=SessionData.Rewarded(lick(5,:)); % Rewarded sessions
-lick(7,:)=~SessionData.Rewarded(lick(5,:)); % Non-rewarded sessions
-
-rewardedTrials = lick(5,logical(lick(6,:))); % Index of rewarded trials
-lick(:,isnan(lick(1,:)))=[];
-[row,col,v] = find(isnan(lick)); lick(:,col)=[];
-
-preLickFrames = round(fps); postLickFrames = size(data.neural,2)-max(lick(4,:)); % 1 second windows before stimulus
-lickWinIdx = -preLickFrames:1:postLickFrames; % IMPORTANT: frame index relative to animal lick
-lickWinMs = lickWinIdx*data.msPerFrame;  % IMPORTANT: time (in milliseconds) relative to animal lick
-startIdx = lick(4,:)'- preLickFrames -1 ;  endIdx = lick(4,:)' + postLickFrames;
-dataLick = zeros(size(data.neural,1),endIdx(1)-startIdx(1),length(lick));
-[C, iL, iD]=intersect(lick(5,:),data.trialNumbers);
-for i = 1:length(lick); dataLick(:,:,i) = data.neural(:,startIdx(i):endIdx(i)-1,iD(i)); end
-
-% histogram(rightTiming, 50); hold on; histogram(leftTiming,50);
-%% Behavior analysis
-events =SessionData.stimEvents;
-% organize stimulus events of each trial (row) into columns: column 1 is
-% left and column 2 is right
-events = cellfun(@(x) x{:},[cellfun(@(x) x(1),events,'UniformOutput',false)' cellfun(@(x) x(2),events,'UniformOutput',false)'],'UniformOutput',false);
-frEvents= cellfun(@numel,events);
-frEvents(:,3)= frEvents(:,1)./sum(frEvents,2); % ratio of left to all events presented during a trial; 0=0% left-sided events, 1=100% left-sided events
-frEvents(:,4)=(SessionData.CorrectSide)';
-frEvents(:,5)=(SessionData.DistStim)'; % distractor
-
+% durSess = size(npy.spks,2)*data.msPerFrame/1000;
+% iFrame = (1:1:durSess)/fps;
 %% Reorganize data for PCA and dPCA
 % trialID.imaging is the master trial index of 2p imaging data. This
 % structure field should contain all indices contained by the other trialID
 % fields defined here
 
-data.neuralNorm=twoP_normMean(data.neural);
-time=data.neuralTimesMs;
-numOfBins = 6;
-edges = 0:1/numOfBins:1; % divide the auditory stimuli presented throughout the session into bins which in this case is 11: 0
-edges = [0 0.01 edges(2:end-1) 0.99 1];
+% --- Use only one of these --- %
+% data.neuralNorm=twoP_normMean(data.neural);
+% data.neuralNorm=twoP_normMean(data.neural(data.idx_redcell,:,:));
+data.neuralNorm=twoP_normMean(data.neural(data.idx_notredcell(1:length(data.idx_redcell)),:,:));
+% --- Use only one of these --- %
 
-stimValues=frEvents(:,3); % fraction of left sided events
+data.pcaTime=(data.neuralTimesMs)/1000;
+numOfBins = 2;
+if numOfBins > 0
+    edges = 0:1/numOfBins:1; % divide the auditory stimuli presented throughout the session into bins which in this case is numOfBins
+    edges = [0 0.01 edges(2:end-1) 0.99 1];
+else 
+    edges = [0 0.5 1];
+end
 
-% Remove auto-reward trials
+stimValues=ratioEvents; % fraction of left sided events
+
+% REMOVE AUTO-REWARD TRIALS
 trialID.notAutoReward=find(~SessionData.AutoReward); % Find the IDs of non-auto-reward trials
 [trialID.imaging,trialID.trialNumbersIdx,trialID.AutoRewardIdx]= intersect(data.trialNumbers,trialID.notAutoReward); % Find the non-auto-reward imaging trial IDs
 
-% ADDITIONALLY, WILL ALSO NEED TO REMOVE TRAINING MODE TRIALS: SessionData.SingleSpout
-
-% remove
+% ADDITIONALLY, TRAINING MODE TRIALS ARE ALSO REMOVED: SessionData.SingleSpout
 trialID.leftLick = find(SessionData.ResponseSide==1); trialID.rightLick = find(SessionData.ResponseSide==2); % Find the behavior trial IDs of left or right decisions
 trialID.imagingLeftLick = intersect(trialID.imaging,trialID.leftLick); % find the trial IDs of non-auto-reward left decisions
 trialID.imagingRightLick = intersect(trialID.imaging,trialID.rightLick); % find the trial IDs of non-auto-reward right decisions
 
 [binCounts,edges,stimulusCondition]=histcounts(stimValues(trialID.imaging),edges); % divides the
 trialID.stimulusCondition = cell(max(unique(stimulusCondition)),1); % creates a field of the cell class to hold trial ID information for each stimulus category
+data.pcaBinCounts = binCounts;
 
 for i = 1:max(unique(stimulusCondition))
     trialID.stimulusCondition{i}=find(stimulusCondition==i);
@@ -208,20 +200,22 @@ stimConditions = {trialID.stimulusConditionLeftDec trialID.stimulusConditionRigh
 [maxLeft, maxLeftIdx]=max(cellfun(@numel, trialID.stimulusConditionLeftDec));
 maxStimTrials = max([maxLeft maxRight]);
 
+% Create an empty multidimensional array for demixed PCA (Kobak et al., 2016): 
 % dimensions: (1) neuron ID, (2) time, (3) trials grouped by stimulus
 % condition, (4) stimulus condition, (5) decision: left or right
 data.pcaArray=nan(size(data.neuralNorm,1),size(data.neuralNorm,2),maxStimTrials,length(trialID.stimulusCondition),2);
-m=0;
+
+% m=0; probably can delete this line
 for i = 1:size(data.pcaArray,5) % i: response (left or right)
     for j = 1:size(data.pcaArray,4) % j: stimulus category (1 through 11 with 1=left? and 11=being right? and everything else in between)
         for k = 1:length(stimConditions{i}{j})
-            data.pcaArray(:,:,k,j,i) = data.neuralNorm(:,:,ismember(data.trialNumbers,stimConditions{i}{j}(k)));
-            m=m+1;
+            data.pcaArray(:,:,k,j,i) = data.neuralNorm(:,:,ismember(data.trialNumbers,stimConditions{i}{j}(k))); % MODIFY THIS LINE TO INTERCHANGE BETWEEN RED VS NON-RED CELLS
+%             m=m+1; probably can delete this line
         end
     end
 end
 
-% Converts the array to new dimensions: (1) neuron ID, (2) stimulus conditions, (3) Decision (L/R) ouped by stimulus
+% Permute the dimensions of the PCA array: (1) neuron ID, (2) stimulus conditions, (3) Decision (L/R) grouped by stimulus
 % condition, (4) time, (5) trial count
 data.pcaArrayPerm=permute(data.pcaArray, [1 4 5 2 3]);
 firingRates= data.pcaArrayPerm;
@@ -235,8 +229,14 @@ for i = 1:size(data.pcaArrayPerm,3)
         end
     end
 end
+data.pca.firingRates = firingRates;
+data.pca.firingRatesAverage = firingRatesAverage;
+data.pca.trialNum=trialNum;
 
-%% Re-organize data for plotting tuning curves
+%Run demixed PCA
+dpcaTwoPData(data);
+
+%% Re-organize data and plot tuning curves
 data.neuralNorm=twoP_normMean(data.neural);
 time=data.neuralTimesMs;
 stimRange = [500 1000]; % stimulus start and end time (in milliseconds)
@@ -245,7 +245,7 @@ numOfBins = 5; % Number of bins (to be specified by the user) excluding the two 
 edges = 0:1/numOfBins:1; % divide the auditory stimuli presented throughout the session into bins 
 edges = [0 0.01 edges(2:end-1) 0.99 1];
 
-stimValues=frEvents(:,3); % fraction of left sided events
+stimValues=ratioEvents; % fraction of left sided events
 [binCounts,edges,stimulusCondition]=histcounts(stimValues(trialID.imaging),edges); % divides the vector (each entry is a trial) containing the fraction of left-sided events into bins
 sR=nan(size(data.neural,1),length(idxtime),max(binCounts),length(binCounts)); % sR = stimulus response. Creates a 4-D vector. 1: cell ID, 2: time, 3: trial, 4: stimulus condition (from all left- to all right-sided events)
 
@@ -257,6 +257,7 @@ end
 tM = squeeze(nanmean(sum(sR,2),3)); % tM = tuning matrix, where rows are cells and columns are the stimulus conditions from 100% left-sided events to 100% right-sided events.
 [sMax,sMaxIdx]=max(tM,[],2);
 sMaxIdx(:,2)=1:length(sMaxIdx); sMaxIdx(:,3:4)=sortrows(sMaxIdx(:,1:2),1); %sort the matrix by the stimulus condition with the maximum response
+hTuningCurve = figure('Name',['Tuning Curve: ' animal ' ' session]);
 imagesc(tM(sMaxIdx(:,4),:)); colormap(jet);
 % imagesc(twoP_normMean(tM(sMaxIdx(:,4),:))); colormap(jet);
 
@@ -270,18 +271,25 @@ imagesc(tM(sMaxIdx(:,4),:)); colormap(jet);
 % trialID.imagingLeftLick = intersect(trialID.imaging,trialID.leftLick); % find the trial IDs of non-auto-reward left decisions
 % trialID.imagingRightLick = intersect(trialID.imaging,trialID.rightLick); % find the trial IDs of non-auto-reward right decisions
 
-%% Plot stimulus-aligned mean (across trials) traces
-filterType = 'sgolay';
+%% Plot stimulus-aligned mean (across trials) traces (PSTH)
+sessionDir = suite2pDir(1:strfind(suite2pDir,'suite2p')-1);
+sessAvgDir = [sessionDir 'sessAvg' filesep];
+
+if ~exist(sessAvgDir, 'dir')
+    mkdir(sessAvgDir)
+end
+
 stimWinIdx= data.neuralTimes;
 trialID.allImaging=lick(5,:);
 trialID.all=intersect(trialID.allImaging,find(~SessionData.AutoReward));
-trialID.leftEasy = intersect(trialID.all,find(frEvents(:,3)==1));
+trialID.leftEasy = intersect(trialID.all,find(ratioEvents==0));
 [trialID.leftEasyIdx, trialID.leftEasySubIdx,trialID.leftEasyImgIdx]= intersect(trialID.leftEasy,trialID.allImaging);
-trialID.rightEasy = intersect(trialID.all,find(frEvents(:,3)==0));
+trialID.rightEasy = intersect(trialID.all,find(ratioEvents==1));
 [trialID.rightEasyIdx,trialID.rightEasySubIdx,trialID.rightEasyImgIdx] = intersect(trialID.rightEasy,trialID.allImaging);
-correctSide = SessionData.CorrectSide(trialID.all);
+correctSide = SessionData.CorrectSide(trialID.all); % correctSide is the side with more stimulus events
 sideOneIdx = find(correctSide==1); sideTwoIdx = find(correctSide==2);
-stim.unsorted= data.neural(:,:,iD);
+% [A,iC,iD]=intersect(data.dataLickTrialNumbers,data.trialNumbers);
+stim.unsorted= data.neural;
 
 xTickStim=[1 find(stimWinIdx == 0) find(stimWinIdx == round(1000/data.msPerFrame)) length(stimWinIdx)]; % define the position of x-tick marks
 xTickStimLabel = {round(stimWinIdx(1)*data.msPerFrame/1000,2,'significant'), stimWinIdx(stimWinIdx==0), round(stimWinIdx(stimWinIdx == round(1000/data.msPerFrame))*data.msPerFrame/1000,2,'significant'), round(stimWinIdx(end)*data.msPerFrame/1000,1,'significant')}; % define x-tick labels
@@ -296,13 +304,16 @@ stim.mean.redCells= mean(stim.redCells,3); stim.mean.notRedCells = mean(stim.not
 stim.mean.colorGrouped= [stim.mean.redCells;stim.mean.notRedCells]; % calculates the mean across all trials for each ROI
 
 stim.mean.normalized.colorGrouped=twoP_normMean(stim.mean.colorGrouped); % Normalize the mean to each ROI's max and min
-stim.mean.normalized.sortedActivity.redCells=twoP_sortROIbyActivity(stim.mean.redCells,[],filterType,filterWin/fps);
-stim.mean.normalized.sortedActivity.notRedCells=twoP_sortROIbyActivity(stim.mean.notRedCells,[],filterType,filterWin/fps);
+stim.mean.normalized.sortedActivity.redCells=twoP_sortROIbyActivity(stim.mean.redCells,[]);
+stim.mean.normalized.sortedActivity.notRedCells=twoP_sortROIbyActivity(stim.mean.notRedCells,[]);
 stim.mean.normalized.sortedActivity.allCells=[stim.mean.normalized.sortedActivity.redCells;stim.mean.normalized.sortedActivity.notRedCells];
 
 stim.variance.normalized.redCells = var(stim.redCells,1,3)./mean(stim.redCells,3);
+stim.variance_sorted.normalized.redCells = twoP_sortROIbyActivity(stim.variance.normalized.redCells);
 stim.variance.normalized.notRedCells = var(stim.notRedCells,1,3)./mean(stim.notRedCells,3);
+stim.variance_sorted.normalized.notRedCells = twoP_sortROIbyActivity(stim.variance.normalized.notRedCells);
 stim.variance.normalized.allCells  = [stim.variance.normalized.redCells;stim.variance.normalized.notRedCells];
+stim.variance_sorted.normalized.allCells  = [stim.variance_sorted.normalized.redCells;stim.variance_sorted.normalized.notRedCells];
 
 % singleTrial = neuralData.colorGrouped(:,:,trial_idx); % Extracts the traces of a single example trial for all neurons
 %
@@ -336,12 +347,12 @@ stim.mean.normalized.sideOneEasy.allCellsSideTwo = [stim.mean.normalized.sideOne
 stim.mean.normalized.sideTwoEasy.allCellsSideOne = [stim.mean.normalized.sideTwoEasy.redCellsSideOne;stim.mean.normalized.sideTwoEasy.notRedCellsSideOne];
 
 % Plot stimulus-aligned responses
-hStimAlignedTraces = figure(1);
+hStimAlignedTraces = figure('Name',[animal ': ' session]);
 set(hStimAlignedTraces, 'Units','inches',...
     'Position',[1 1 14 4]);
 
 im_stim_aligned={stim.mean.normalized.sortedActivity.allCells,...
-    stim.variance.normalized.allCells,...
+    stim.variance_sorted.normalized.allCells,...
     stim.mean.normalized.sideOne.allCells,...
     stim.mean.normalized.sideTwo.allCellsSideOne,...
     stim.mean.normalized.sideTwo.allCells,...
@@ -372,8 +383,8 @@ for i = 1:length(im_stim_aligned)
     subplot(numPlotRows,length(im_stim_aligned),[i i+length(im_stim_aligned) i+length(im_stim_aligned)*2]);
     imagesc(im_stim_aligned{i},prctile(im_stim_aligned{i}(:),[1 99])); colormap('default'); hold on;
     colormap(jet)
-    hLineVert=line([find(stimWinIdx==0) find(stimWinIdx==0)], [0 size(dataLick,1)]); % Draw a line at TIME ZERO
-    hLineHor=line([0 size(stim.unsorted,2)], [length(data.idx_redcell) length(data.idx_redcell)]); % Draw a line at TIME ZERO
+    hLineVert=line([find(stimWinIdx==0) find(stimWinIdx==0)], [0 size(data.neural,1)]); % Draw a line at TIME ZERO
+    hLineHor=line([0 size(stim.unsorted,2)], [length(data.idx_redcell) length(data.idx_redcell)]); % Draw a line at to separate rate RED from NON-RED neurons
     set(hLineVert,'LineWidth',1.5,'Color',[1 1 1],'LineStyle',':');
     set(hLineHor,'LineWidth',1.5,'Color',[1 1 1],'LineStyle',':');
     try hTitle = title(imTitle{i}); set(hTitle,'FontName','Arial','FontSize',8,'FontWeight','bold'); end
@@ -394,11 +405,15 @@ for i = 1:length(im_stim_aligned)
     try hYLabelText.Color=[0 0 0]; end
     
 end
-print([analysisDir filesep analysisFileName '_stimulusAlignedTraces'],'-depsc');
+% print([analysisDir filesep analysisFileName '_stimulusAlignedTraces'],'-depsc');
+exportgraphics(gcf,[sessAvgDir 'PSTH_' baseFileName '.pdf']);
 
 %% Choice(lick)-aligned (all choices, including error) traces averaged across stimulus side (run previous cell first)
+lickWinIdx=data.lickWinIdx; lickWinMs=data.lickWinMs; dataLick = data.dataLick;
 xTickChoice=[1 find(lickWinIdx == 0) find(lickWinIdx == round(1000/data.msPerFrame)) length(lickWinIdx)]; % these tick marks are plotted
-xTickChoiceLabel = {round(lickWinMs(1)/1000,2,'significant') ,lickWinMs(lickWinMs==0), round(lickWinMs(lickWinIdx == round(1000/data.msPerFrame))/1000,2,'significant'),round(lickWinMs(end)/1000,1,'significant')};
+% xTickChoiceLabel = {round(lickWinMs(1)/1000,2,'significant') ,lickWinMs(lickWinMs==0), round(lickWinMs(lickWinIdx == round(1000/data.msPerFrame))/1000,2,'significant'),round(lickWinMs(end)/1000,2,'significant')};
+xTickChoiceLabel = {round(lickWinMs(1)/1000,2,'significant') ,lickWinMs(lickWinMs==0), round(lickWinMs(lickWinIdx == round(1000/data.msPerFrame))/1000,2,'significant'),[]};
+
 x_label_text = {'Time from','first lick (s)'};
 
 % Compute the mean inferred spiking activity across all trials
@@ -406,11 +421,11 @@ meanChoice=mean(dataLick,3); % computes the mean across all trials (third dimens
 nmeanChoice = twoP_normMean(meanChoice); % normalizes mean inferred spike traces for individual ROIs
 mC.Sorted = twoP_sortROIbyActivity(nmeanChoice); % sorted normalized mean inferred spike traces of individual neurons
 
-% Cross-valication analysis
+% Cross-validation analysis
 mC.Odd = mean(dataLick(:,:,1:2:end),3); mC.Even = mean(dataLick(:,:,2:2:end),3);
 mC.firstHalf = mean(dataLick(:,:,1:round(size(dataLick,3)/2)),3); mC.secondHalf = mean(dataLick(:,:,round(size(dataLick,3)/2)+1:end),3);
 mC.norm.Odd=twoP_normMean(mC.Odd); mC.norm.Even=twoP_normMean(mC.Even);
-[mC.norm.OddMax,mC.norm.OddMaxIdx]= max(smoothdata(mC.norm.Odd,2,'sgolay',filterFrames),[],2); mC.norm.OddMaxIdx= sortrows([mC.norm.OddMaxIdx (1:1:length(mC.norm.OddMaxIdx))']);
+[mC.norm.OddMax,mC.norm.OddMaxIdx]= max(mC.norm.Odd,[],2); mC.norm.OddMaxIdx= sortrows([mC.norm.OddMaxIdx (1:1:length(mC.norm.OddMaxIdx))']);
 mC.norm.OddSorted = mC.norm.Odd(mC.norm.OddMaxIdx(:,2),:);
 mC.norm.EvenSorted = mC.norm.Even(mC.norm.OddMaxIdx(:,2),:);
 
@@ -420,18 +435,28 @@ meanL=mean(leftSideData,3); meanR=mean(rightSideData,3);
 nmeanL=twoP_normMean(meanL); nmeanR=twoP_normMean(meanR);
 [mC.norm.LL,mC.norm.RR,mC.norm.LR,mC.norm.RL]=twoP_sortROIbyActivity(nmeanL,nmeanR);
 
-hStimSideTraces = figure(2);
+[easyLeftTrialID,iB,iEasyLeft] = intersect(find(ratioEvents==0)',data.dataLickTrialNumbers); [easyRightTrialID,iB,iEasyRight] = intersect(find(ratioEvents==1)',data.dataLickTrialNumbers); 
+dataEasyLeft=dataLick(:,:,iEasyLeft); dataEasyRight=dataLick(:,:,iEasyRight);
+meanEasyL=mean(dataEasyLeft,3); meanEasyR=mean(dataEasyRight,3);
+nmeanLeasy=twoP_normMean(meanEasyL); nmeanReasy=twoP_normMean(meanEasyR);
+[mC.norm.LLeasy,mC.norm.RReasy,mC.norm.LReasy,mC.norm.RLeasy]=twoP_sortROIbyActivity(nmeanLeasy,nmeanReasy);
+
+hStimSideTraces = figure('Name',[animal ': ' session]);
 set(hStimSideTraces, 'Units','inches',...
     'Position',[1 1 10 4]);
 
-im={mC.Sorted, mC.norm.OddSorted, mC.norm.EvenSorted, mC.norm.LL, mC.norm.RL, mC.norm.RR, mC.norm.LR};
+im={mC.Sorted, mC.norm.OddSorted, mC.norm.EvenSorted, mC.norm.LL, mC.norm.RL, mC.norm.RR, mC.norm.LR, mC.norm.LLeasy, mC.norm.RLeasy, mC.norm.RReasy, mC.norm.LReasy};
 imTitle={{'Choice-aligned activity','all correct trials'},...
     {'Correct choices -','odd trials'},...
     {'Correct choices -','even trials','(odd-sorted)'},...
     {'Left choices', 'left sorted'},...
     {'Right choices','left sorted'},...
     {'Right choices','right sorted)'},...
-    {'Left choices','right sorted'}};
+    {'Left choices','right sorted'},...
+    {'Left choices - easy', 'left sorted'},...
+    {'Right choices - easy','left sorted'},...
+    {'Right choices - easy','right sorted)'},...
+    {'Left choices - easy','right sorted'}};
 imYLabel={{'ROI #'}};
 numPlotRows=1;
 
@@ -451,15 +476,17 @@ for i = 1:numel(im)
     if i>1; set(gca,'YTickLabel',[]); end
 end
 
-print([analysisDir filesep analysisFileName '_choiceAlignedTraces'],'-depsc');
+% print([analysisDir filesep analysisFileName '_choiceAlignedTraces'],'-depsc');
+exportgraphics(gcf,[sessAvgDir 'PETH_Lick_' baseFileName '.pdf']);
 
 %% 
-iStart=4; iEnd = 6; % index (relative to choice onset at index 0) to be averaged into a time bin for analysis
-% X = squeeze(mean(dataLick(:,find(lickWinIdx==-3):find(lickWinIdx==-1),:),2))';
-permROI = randperm(size(dataLick,1));
-Xone = squeeze(mean(dataLick(permROI(1:floor(length(permROI)/2)),find(lickWinIdx==-3):find(lickWinIdx==-1),:),2))';
-Xtwo = squeeze(mean(dataLick(permROI(floor(length(permROI)/2)+1:end),find(lickWinIdx==-3):find(lickWinIdx==-1),:),2))';
-% Y = lick(1,:)';
+iStart=-3; iEnd = -1; % index (relative to choice onset at index 0) to be averaged into a time bin for analysis
+X = squeeze(mean(dataLick(:,find(lickWinIdx==iStart):find(lickWinIdx==iEnd),:),2))';
+Y = lick(1,:)';
+
+% permROI = randperm(size(dataLick,1));
+% Xone = squeeze(mean(dataLick(permROI(1:floor(length(permROI)/2)),find(lickWinIdx==-3):find(lickWinIdx==-1),:),2))';
+% Xtwo = squeeze(mean(dataLick(permROI(floor(length(permROI)/2)+1:end),find(lickWinIdx==-3):find(lickWinIdx==-1),:),2))';
 for i = 1:length(lick(1,:))
     if lick(1,i) == 1
         Y{i,1}='leftChoice';
@@ -468,25 +495,30 @@ for i = 1:length(lick(1,:))
     end
 end
 
-SVMModel = fitclinear(Xone,Y,'ClassNames',{'leftChoice','rightChoice'},...
+% SVMModel = fitclinear(Xone,Y,'ClassNames',{'leftChoice','rightChoice'},...
+%     'OptimizeHyperparameters','auto',...
+%     'HyperparameterOptimizationOptions',struct('MaxObjectiveEvaluations',50,'AcquisitionFunctionName','expected-improvement-plus','KFold',40,'UseParallel',true));
+
+SVMModel = fitcsvm(X,Y,'ClassNames',{'leftChoice','rightChoice'},...
     'OptimizeHyperparameters','auto',...
-    'HyperparameterOptimizationOptions',struct('MaxObjectiveEvaluations',50,'AcquisitionFunctionName','expected-improvement-plus','KFold',40,'UseParallel',true));
+    'HyperparameterOptimizationOptions',struct('AcquisitionFunctionName','expected-improvement-plus','KFold',10,'UseParallel',false ));
 
-Ypred_self=predict(SVMModel,Xone); 
-Ypred_other=predict(SVMModel,Xtwo); 
 
-disp(['Accuracy in predicting self: ' num2str((sum(strcmp(Y,Ypred_self))/numel(strcmp(Y,Ypred_self))*100)) '%'])
-disp(['Accuracy in predicting other: ' num2str((sum(strcmp(Y,Ypred_other))/numel(strcmp(Y,Ypred_other))*100)) '%'])
+% Ypred_self=predict(SVMModel,Xone); 
+% Ypred_other=predict(SVMModel,Xtwo); 
 
-numIters=1000;
-Ypred_all = zeros(1,numIters);
-parfor i = 1:numIters
-    permROI = randperm(size(dataLick,1));
-    Xtwo = squeeze(mean(dataLick(permROI(floor(length(permROI)/2)+1:end),find(lickWinIdx==-3):find(lickWinIdx==-1),:),2))';
-    Ypred_two=predict(SVMModel,Xtwo); 
-    Ypred_all(i)=sum(strcmp(Y,Ypred_two))/numel(strcmp(Y,Ypred_two));
-end
-histogram(Ypred_all,100);
+% disp(['Accuracy in predicting self: ' num2str((sum(strcmp(Y,Ypred_self))/numel(strcmp(Y,Ypred_self))*100)) '%'])
+% disp(['Accuracy in predicting other: ' num2str((sum(strcmp(Y,Ypred_other))/numel(strcmp(Y,Ypred_other))*100)) '%'])
+
+% numIters=1000;
+% Ypred_all = zeros(1,numIters);
+% parfor i = 1:numIters
+%     permROI = randperm(size(dataLick,1));
+%     Xtwo = squeeze(mean(dataLick(permROI(floor(length(permROI)/2)+1:end),find(lickWinIdx==-3):find(lickWinIdx==-1),:),2))';
+%     Ypred_two=predict(SVMModel,Xtwo); 
+%     Ypred_all(i)=sum(strcmp(Y,Ypred_two))/numel(strcmp(Y,Ypred_two));
+% end
+% histogram(Ypred_all,100);
 
 % SVMModel = fitrlinear(X,Y,...
 %     'OptimizeHyperparameters','auto',...

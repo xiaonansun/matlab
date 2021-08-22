@@ -13,16 +13,14 @@ if ~exist('filterType','var')
     filterType = 'sgolay';
 end
 
-if ~exist('filterWindow','var')
+if ~exist('filterWindow','var') 
     filterWindow = 10;
 end
-
-
 
 if ~exist('iMatrix2','var') || isempty(iMatrix2)
     [~,maxValIdx1]= max(smoothdata(iMatrix1,2,filterType,filterWindow),[],2); maxValIdx1= sortrows([maxValIdx1 (1:1:length(maxValIdx1))']);
     oMatrix1 = iMatrix1(maxValIdx1(:,2),:);
-    oMatrix2=zeros(size(oMatrix1,1),size(oMatrix1,2));
+    oMatrix2 = zeros(size(oMatrix1,1),size(oMatrix1,2));
 else
     [~,maxValIdx1]= max(smoothdata(iMatrix1,2,filterType,filterWindow),[],2); maxValIdx1= sortrows([maxValIdx1 (1:1:length(maxValIdx1))']);
     oMatrix1 = iMatrix1(maxValIdx1(:,2),:);

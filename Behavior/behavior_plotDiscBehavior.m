@@ -1,6 +1,6 @@
 %%
 close all;
-Animal = 'mSM82';
+Animal = 'Plex62';
 cPath = '\\grid-hs\churchland_nlsas_data\data\Behavior_Simon\';
 [Performance,bhv] = DelayedLoc_learningCurves(Animal,cPath);
 disp([Animal '. Detection sessions: ' num2str(sum(sum(Performance.Detection>0))) '; Discrimination Sessions: ' num2str(sum(sum(Performance.Discrimination>0)))]);
@@ -21,7 +21,7 @@ ylabel('Proportion of right choices');
 
 %%
 cPath = '\\grid-hs\churchland_nlsas_data\data\Behavior_Simon';
-animal = 'CSP30';
+animal = 'Plex62';
 
 sDir = dir([cPath filesep animal filesep 'SpatialDisc' filesep 'Session Data' filesep '*.mat']);
 for i = 1:length(sDir)

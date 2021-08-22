@@ -1,7 +1,8 @@
-function [stimTime, spoutTime, lickR, lickL, water]=behavior_findEventTiming(SessionData)
+function [stimTime, stimEndTime, spoutTime, lickR, lickL, levGrabR, levGrabL, water]=behavior_findEventTiming(bhv)
 % Code for extracting event timing
 % Code snippet from Simon Musall
-bhv=SessionData;
+
+% bhv=SessionData;
 trialCnt=bhv.nTrials;
 for iTrials = 1:trialCnt
     leverTimes = [reshape(bhv.RawEvents.Trial{iTrials}.States.WaitForAnimal1',1,[]) ...
