@@ -12,9 +12,23 @@ end
 % Specify session to load
 exps = twoP_getAcquisitionRecord;
 
-baseDir = '\\grid-hs\churchland_nlsas_data\data\richard_s2p_npy';
+if convertCharsToStrings(getenv('COMPUTERNAME')) == convertCharsToStrings('MANHASSET')
+    baseDir = 'G:\2PData';
+elseif convertCharsToStrings(getenv('COMPUTERNAME')) == convertCharsToStrings('SUNHP')
+    %     imagingRootDir = '\\churchlandNAS\homes\DOMAIN=CSHL\smusall\suite2p';
+    baseDir = '\\grid-hs\churchland_nlsas_data\data\richard_s2p_npy';
+    %     codeRootDir = 'C:\Users\Xiaonan Richard Sun\Dropbox\Users\Richard\matlab';
+    %     bhvRootDir = '\\grid-hs\churchland_nlsas_data\data\Behavior_Simon';
+elseif convertCharsToStrings(computer) == convertCharsToStrings('GLNXA64') || isunix == 1
+    baseDir = '/grid/churchland/data/data/richard_s2p_npy';
+    %     codeRootDir = '/grid/churchland/home/xisun/matlab';
+    %     bhvRootDir = '/grid/churchland/data/data/Behavior_Simon';
+end
+
+% baseDir = '\\grid-hs\churchland_nlsas_data\data\richard_s2p_npy';
 subDir = 'logisticRegression';
-s2pDir = 'suite2p\plane0';
+s2pDir = fullfile('suite2p', 'plane0');
+
 LR = struct;
 iStart = 2;
 
