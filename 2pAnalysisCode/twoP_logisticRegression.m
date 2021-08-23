@@ -83,6 +83,8 @@ Vc_nr = rateDisc_getBhvRealignment(Vc_nr, cBhv, segFrames, opts);
 
 [lr.cvAcc, lr.bMaps, lr.betaNeuron, lr.mdlAll, lr.trialCnt, lr.allAUC, lr.shufAUC] = rateDisc_logDecoder(Vc, [], cBhv, useTrials, 0, regType, stepSize, decType,[],1);
 lr.Vc = Vc; lr.Vc_r = Vc_r; lr.Vc_nr = Vc_nr;
+lr.idx.redcell = data.idx_redcell; lr.idx.notredcell = data.idx_notredcell;
+
 while all(isnan(lr.cvAcc))
     fTrials = fTrials-0.1; lr.fTrials = fTrials;
     useTrials = round(size(Vc,3)*fTrials/10)*10;
