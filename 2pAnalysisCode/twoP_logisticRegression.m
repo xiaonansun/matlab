@@ -4,7 +4,7 @@ function lr = twoP_logisticRegression(animal, session, data, SessionData, subSam
 % data: two-photon data struct
 % SessionData: behavior data
 
-dbstop if error
+% dbstop if error
 
 iSub = strfind(data.suite2pDir,filesep);
 baseDir = data.suite2pDir(1:iSub(end-4));

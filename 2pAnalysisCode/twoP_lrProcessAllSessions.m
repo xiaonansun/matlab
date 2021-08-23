@@ -27,7 +27,7 @@ for i = iStart:size(exps,1)
         % ----- Define event-aligned matrices ----- %%
         [lick,data.lickWinIdx,data.lickWinMs,data.dataLick, data.dataLickTrialNumbers]=twoP_alignToLick(data, SessionData);
         
-        lr = twoP_logisticRegression(animal, session, data, SessionData, true, true);
+        lr = twoP_logisticRegression(animal, session, data, SessionData, true, false);
 %         lr = twoP_logisticRegression(animal, session, data, SessionData, true);
     end
     

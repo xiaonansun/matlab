@@ -39,7 +39,7 @@ E = behavior_getStimEvents(SessionData); events = E.events; frEvents = E.frEvent
 
 % dbstop if error
 
-lr = twoP_logisticRegression(animal, session, data, SessionData, true, true); %% the last variable, if true, loads existing logstic regression data
+lr = twoP_logisticRegression(animal, session, data, SessionData, true, false); %% the last variable, if true, loads existing logstic regression data
 
 cBhv = selectBehaviorTrials(SessionData, data.trialNumbers); %% very important in matching trial indices
 
