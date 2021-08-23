@@ -39,16 +39,20 @@ elseif convertCharsToStrings(getenv('COMPUTERNAME')) == convertCharsToStrings('S
 %     imagingRootDir = '\\churchlandNAS\homes\DOMAIN=CSHL\smusall\suite2p';
     imagingRootDir = '\\grid-hs\churchland_nlsas_data\data\richard_s2p_npy';
     codeRootDir = 'C:\Users\Xiaonan Richard Sun\Dropbox\Users\Richard\matlab';
-    disp('Loading suite2p data...');
+    hbvRootDir = '\\grid-hs\churchland_nlsas_data\data\Behavior_Simon';
 elseif convertCharsToStrings(computer) == convertCharsToStrings('GLNXA64') || isunix == 1
     imagingRootDir = '/grid/churchland/data/data/richard_s2p_npy';
     codeRootDir = '/grid/churchland/home/xisun/matlab';
+    bhvRootDir = '/grid/churchland/data/data/Behavior_Simon';
 end
+% behaviorRootDir= '\\grid-hs\churchland_nlsas_data\data\Behavior_Simon';
 
+disp('Loading suite2p data...');
 D.imagingRootDir = imagingRootDir; D.codeRootDir = codeRootDir;
 addpath(genpath(codeRootDir)); % adds the paths of the code files to be executed
 
 imagingSubDir = ['suite2p' filesep 'plane0'];
+bhvSubDir = fullfile('SpatialDisc', 'Session Data');
 
 disp(['Animal: ' animal '; Session: ' session]);
 
@@ -109,7 +113,8 @@ end
 
 % Load behavior data
 fprintf('Loading behavior data...');
-[bhv,bhvFilePath] = twoP_loadBehaviorSession(animal,session); 
+bhvDir = fullfile(bhvRootDir,animal,bhvSubDir);
+[bhv,bhvFilePath] = twoP_loadBehaviorSession(animal,session,bhvDir); 
 % bhv = bhv.bhv;
 % [filepath,bhvFileName,ext]=fileparts(bhvFilePath); clear filepath ext;
 fprintf('DONE!\n');

@@ -1,4 +1,4 @@
-function [bhv,behaviorFilePath] = twoP_loadBehaviorSession(animal,session)
+function [bhv,behaviorFilePath] = twoP_loadBehaviorSession(animal,session,bhvDir)
 % dbstop 23
 
 % --- Load the google sheets document "2photon acquisition record" --- %
@@ -18,8 +18,8 @@ end
 
 minFileSize=1024*8; %minimum size of behavior file (SessionData)
 
-behaviorRootDir= '\\grid-hs\churchland_nlsas_data\data\Behavior_Simon';
-behaviorSubDir = 'SpatialDisc\Session Data';
+% behaviorRootDir= '\\grid-hs\churchland_nlsas_data\data\Behavior_Simon';
+% behaviorSubDir = 'SpatialDisc\Session Data';
 
 if length(session) == 6
     sessionDate = datestr(datenum(session,'yymmdd'),'mmmdd_yyyy');
@@ -31,12 +31,12 @@ elseif length(session) == 9
     sessionDate = datestr(datenum(session(1:end-1),'yyyymmdd'),'mmmdd_yyyy');
 end
 
-behaviorFileList = dir(fullfile(behaviorRootDir,animal,behaviorSubDir));
+behaviorFileList = dir(bhvDir);
 dateIdx = find(contains({behaviorFileList.name},sessionDate));
 dateIdx(cell2mat({behaviorFileList(dateIdx).bytes}) < minFileSize)=[];
 
 if ~isempty(bhvFName) % load behavior file from a specific file, as specified on the google sheets
-    behaviorFilePath = [behaviorFileList(dateIdx(1)).folder filesep bhvFName '.mat'];
+    behaviorFilePath = fullfile(behaviorFileList(dateIdx(1)).folder, bhvFName '.mat');
 
     disp('The corresponding Bpod behavior data has been loaded.')
     return
