@@ -36,8 +36,7 @@ dateIdx = find(contains({behaviorFileList.name},sessionDate));
 dateIdx(cell2mat({behaviorFileList(dateIdx).bytes}) < minFileSize)=[];
 
 if ~isempty(bhvFName) % load behavior file from a specific file, as specified on the google sheets
-    behaviorFilePath = fullfile(behaviorFileList(dateIdx(1)).folder, bhvFName '.mat');
-
+    behaviorFilePath = fullfile(behaviorFileList(dateIdx(1)).folder, [bhvFName '.mat']);
     disp('The corresponding Bpod behavior data has been loaded.')
     return
 else
