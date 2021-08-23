@@ -16,9 +16,10 @@ for i = iStart:size(exps,1)
     session = exps{i,6};
     
     try
-        baseFileName = [animal '_' session];
+%         baseFileName = [animal '_' session];
+        [npy,data,SessionData,bhvFilePath,suite2pDir]=twoP_loadImgBhvData(animal,session, true, 10, false);
         
-        [npy,data,SessionData,bhvFilePath,suite2pDir]=twoP_loadImgBhvData(animal,session, true, 10);
+%         [npy,data,SessionData,bhvFilePath,suite2pDir]=twoP_loadImgBhvData(animal,session, true, 10);
         
         % ----- makes adjustments to data struct ----- %%
         data = twoP_adjustData(data,SessionData);
@@ -26,7 +27,8 @@ for i = iStart:size(exps,1)
         % ----- Define event-aligned matrices ----- %%
         [lick,data.lickWinIdx,data.lickWinMs,data.dataLick, data.dataLickTrialNumbers]=twoP_alignToLick(data, SessionData);
         
-        lr = twoP_logisticRegression(animal, session, data, SessionData, true);
+        lr = twoP_logisticRegression(animal, session, data, SessionData, true, true);
+%         lr = twoP_logisticRegression(animal, session, data, SessionData, true);
     end
     
     clear data lr; close all;
