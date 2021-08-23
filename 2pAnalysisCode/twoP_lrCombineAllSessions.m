@@ -58,8 +58,8 @@ elseif loadCombined == 0
         LR(i).shufMu = [];
         LR(i).shufSigma = [];
         try
-            load([fullfile(baseDir,LR(i).animal,'imaging',LR(i).session,subDir) filesep LR(i).animal '_' LR(i).session '_lr.mat'],'lr');
-            load([fullfile(baseDir,LR(i).animal,'imaging',LR(i).session,s2pDir,'data.mat')],'data');
+            load(fullfile(baseDir,LR(i).animal, 'imaging', LR(i).session, subDir, [LR(i).animal '_' LR(i).session '_lr.mat']),'lr');
+            load(fullfile(baseDir,LR(i).animal,'imaging',LR(i).session,s2pDir,'data.mat'),'data');
             %     load([fullfile(baseDir,animal,'imaging',session) filesep s2pDir filesep 'data.mat']);
             LR(i).cvAcc = lr.cvAcc; LR(i).cvAcc_r = lr.cvAcc_r; LR(i).mcvAcc_nr_rep = lr.mcvAcc_nr_rep;
             LR(i).bMaps = lr.bMaps; LR(i).allAUC = lr.allAUC; LR(i).iEpoch = lr.iEpoch; LR(i).segFrames = lr.segFrames;

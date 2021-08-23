@@ -90,7 +90,9 @@ end
 
 %% Load in analog data
 
+tic
 [volt, data.analogFreq] = readMOMAnalog(binFilename);
+disp(['MScan analog file (.bin) loaded in ' num2str(toc) ' seconds.']);
 
 trialCodes = volt(trialCodeCh, :);
 slowGalvo = volt(slowGalvoCh, :);
