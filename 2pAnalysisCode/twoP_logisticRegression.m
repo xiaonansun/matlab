@@ -6,7 +6,9 @@ function lr = twoP_logisticRegression(animal, session, data, SessionData, subSam
 
 dbstop if error
 
-baseDir = '\\grid-hs\churchland_nlsas_data\data\richard_s2p_npy'; % directory of all 2p data
+iSub = strfind(data.suite2pDir,filesep);
+baseDir = data.suite2pDir(1:iSub(end-4));
+% baseDir = '\\grid-hs\churchland_nlsas_data\data\richard_s2p_npy'; % directory of all 2p data
 lrDir = fullfile(baseDir,animal,'imaging',session,'logisticRegression'); % directory to save the current logistic regression analysis data and figures
 if ~exist(lrDir,'dir') % if the current analysis directory doesn't exist, then create one
     mkdir(lrDir);

@@ -36,8 +36,8 @@ iSub = strfind(suite2p_output_dir,filesep);
 bin_MScan_dir = suite2p_output_dir(1:iSub(end-1));bin_MScan_dir_content = dir(bin_MScan_dir);
 
 % bin_MScan_dir = fullfile(suite2p_base_dir, animal, 'imaging', session, filesep); 
-bin_MScan_filepath = [bin_MScan_dir bin_MScan_dir_content(contains({bin_MScan_dir_content.name}','bin')).name];
-npy.bin_MScan_filepath = bin_MScan_filepath;
+npy.bin_MScan_filepath = [bin_MScan_dir bin_MScan_dir_content(contains({bin_MScan_dir_content.name}','bin')).name];
+% npy.bin_MScan_filepath = bin_MScan_filepath;
 
 npy.bin_chan1_filepath = fullfile(suite2p_output_dir, 'data.bin');
 npy.bin_chan2_filepath = fullfile(suite2p_output_dir, 'data_chan2.bin');

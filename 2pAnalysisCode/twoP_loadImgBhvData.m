@@ -39,7 +39,7 @@ elseif convertCharsToStrings(getenv('COMPUTERNAME')) == convertCharsToStrings('S
 %     imagingRootDir = '\\churchlandNAS\homes\DOMAIN=CSHL\smusall\suite2p';
     imagingRootDir = '\\grid-hs\churchland_nlsas_data\data\richard_s2p_npy';
     codeRootDir = 'C:\Users\Xiaonan Richard Sun\Dropbox\Users\Richard\matlab';
-    hbvRootDir = '\\grid-hs\churchland_nlsas_data\data\Behavior_Simon';
+    bhvRootDir = '\\grid-hs\churchland_nlsas_data\data\Behavior_Simon';
 elseif convertCharsToStrings(computer) == convertCharsToStrings('GLNXA64') || isunix == 1
     imagingRootDir = '/grid/churchland/data/data/richard_s2p_npy';
     codeRootDir = '/grid/churchland/home/xisun/matlab';
