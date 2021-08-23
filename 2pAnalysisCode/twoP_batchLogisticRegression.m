@@ -11,4 +11,4 @@ C=twoP_lrCheckResults;
 %%
 clear LR;
 
-LR = twoP_lrLoadAllSessions(0);
+LR = twoP_lrCombineAllSessions(0);

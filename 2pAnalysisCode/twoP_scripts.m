@@ -9,7 +9,7 @@ session = '20200321a';
 
 baseFileName = [animal '_' session];
 
-[npy,data,SessionData,bhvFilePath,suite2pDir]=twoP_loadImgBhvData(animal,session, true, 10);
+[npy,data,SessionData,bhvFilePath,suite2pDir]=twoP_loadImgBhvData(animal,session, true, 10, false);
 
 % ----- Makes adjustments to the twoP data struct ----- %%
 data = twoP_adjustData(data,SessionData);

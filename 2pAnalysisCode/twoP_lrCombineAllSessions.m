@@ -1,4 +1,4 @@
-function LR=twoP_lrLoadAllSessions(loadCombined)
+function LR=twoP_lrCombineAllSessions(loadCombined)
 % lr is single session logistic regression data
 % LR is a struct that contains the lr struct from all sessions
 % loadCombined = 0 looks through all all session folders and creates a new
@@ -50,6 +50,7 @@ elseif loadCombined == 0
             LR(i).cvAcc = lr.cvAcc; LR(i).cvAcc_r = lr.cvAcc_r; LR(i).mcvAcc_nr_rep = lr.mcvAcc_nr_rep;
             LR(i).bMaps = lr.bMaps; LR(i).allAUC = lr.allAUC; LR(i).iEpoch = lr.iEpoch; LR(i).segFrames = lr.segFrames;
             LR(i).Vc = lr.Vc;
+            LR(i).cBhv = lr.cBhv;
             LR(i).trialNumbers = data.trialNumbers;
             LR(i).idx_redcell = data.idx_redcell; LR(i).idx_notredcell = data.idx_notredcell;
             mu = zeros(size(lr.shufAUC,1),size(lr.shufAUC,2)); sigma = zeros(size(lr.shufAUC,1),size(lr.shufAUC,2));
@@ -64,6 +65,6 @@ elseif loadCombined == 0
         disp([LR(i).animal ' ' LR(i).session ' loaded.']);
     end
     disp('Completed: loading and combining logistic regression analysis data.');
-    save(fullfile(baseDir,[datestr(now,'yyyy-mm-dd_HHMMSS') '_logisticRegressionAllAnimals.mat']),'LR');
+    save(fullfile(baseDir,[datestr(now,'yyyy-mm-dd_HHMMSS') '_logisticRegressionAllAnimals.mat']),'LR','-v7.3','-nocompression');
     disp(['Saved combined logistic regression analysis data as: ' fullfile(baseDir,[datestr(now,'yyyy-mm-dd_HHMMSS') '_logisticRegressionAllAnimals.mat'])]);
 end

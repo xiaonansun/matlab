@@ -31,8 +31,6 @@ end
 analysisFileName = [animal '_' session];
 
 % Define directories
-
-D = struct;
 if convertCharsToStrings(getenv('COMPUTERNAME')) == convertCharsToStrings('MANHASSET')
     imagingRootDir = 'G:\2PData';
 elseif convertCharsToStrings(getenv('COMPUTERNAME')) == convertCharsToStrings('SUNHP')
@@ -45,7 +43,6 @@ elseif convertCharsToStrings(computer) == convertCharsToStrings('GLNXA64') || is
     codeRootDir = '/grid/churchland/home/xisun/matlab';
 end
 
-D.imagingRootDir = imagingRootDir; D.codeRootDir = codeRootDir;
 addpath(genpath(codeRootDir)); % adds the paths of the code files to be executed
 
 imagingSubDir = ['suite2p' filesep 'plane0'];
@@ -67,24 +64,16 @@ disp(['Animal: ' animal '; Session: ' session]);
 %     analysis.error.behaviorTable = ME.message;
 % end
 
-analysisDir = fullfile(imagingRootDir,'analysis'); %directory of the analysis history summary file
-
-if ~exist(fullfile(imagingRootDir,'analysis'),'dir')
-    mkdir(analysisDir);
-end
-
-try
-load(fullfile(analysisDir,'analysis.mat'),'analysis'); % load the analysis history summary file
+if exist(,'dir')
+analysisDir = 'C:\Users\Xiaonan Richard Sun\Dropbox\Users\Richard\matlab\twoP_analysis'; %directory of the analysis history summary file
+load([analysisDir filesep 'analysis.mat']); % load the analysis history summary file
 currentDate=datestr(now,'yyyy-mm-dd_HHMMss'); currAnalIdx=length(analysis)+1; % append data of the current analysis to the summary file
 
 fprintf('Loading 2P imaging data...');
 
 % organize suite2p data into npy files (ROI and spiking)
 tic
-
-s2pDataDir = fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir);
-codeDir = fullfile(codeRootDir,'2pAnalysisCode');
-npy = twoP_importSuite2pData(animal,session, s2pDataDir, codeDir); 
+npy = twoP_importSuite2pData(animal,session, imagingRootDir); 
 disp(['The .npy file was loaded in ' num2str(toc) ' seconds.'])
 
 % IMPORTANT!!! smoothes inferred spikes with a gaussian filter
