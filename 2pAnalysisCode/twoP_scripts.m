@@ -4,8 +4,8 @@
 clear animal session data npy SessionData events; close all;
 
 % Specify session to load
-animal = 'CSP27';
-session = '20200321a';
+animal = 'CSP30';
+session = '200301a';
 [npy,data,SessionData,bhvFilePath,suite2pDir]=twoP_loadImgBhvData(animal,session, true, 10, false);
 
 % baseFileName = [animal '_' session];
