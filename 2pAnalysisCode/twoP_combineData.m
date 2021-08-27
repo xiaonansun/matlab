@@ -76,9 +76,9 @@ parfor i = 2:size(exps,1)
                 tempR(:,:,iShuf) = squeeze(mean(Vc(data.idx_redcell,:,sBhv.sub.AllIdx(iSub,shufIdx)),3,'omitnan'));
                 tempNR(:,:,iShuf) = squeeze(mean(Vc(data.idx_notredcell,:,sBhv.sub.AllIdx(iSub,shufIdx)),3,'omitnan'));
             end
-            rVsub{5}(:,:,iSub) = mean(tempR),3,'omitnan');
+            rVsub{5}(:,:,iSub) = mean(tempR,3,'omitnan');
             rVsub{6}(:,:,iSub) = std(tempR,0,3,'omitnan');
-            rVsub{7}(:,:,iSub) = mean(tempNR),3,'omitnan');
+            rVsub{7}(:,:,iSub) = mean(tempNR,3,'omitnan');
             rVsub{8}(:,:,iSub) = std(tempNR,0,3,'omitnan');
         end
         Vsub(i,:) = rVsub;
