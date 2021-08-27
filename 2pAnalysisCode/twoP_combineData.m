@@ -4,6 +4,7 @@ exps = twoP_getAcquisitionRecord;
 colAnimal = exps(:,1); colSession = exps(:,6);
 
 S = twoP_settings;
+nShuffle = S.nShuffle;
 if S.isUnix == true; parpool('local',16); end
 bhvRootDir = S.dir.bhvRootDir;
 bhvSubDir = S.dir.bhvSubDir;
@@ -60,10 +61,25 @@ parfor i = 2:size(exps,1)
         disp('Computing mean PSTH...');
         rVsub = Vsub(i,:);
         rVsub{1} = zeros(length(data.idx_redcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
+        rVsub{2} = zeros(length(data.idx_redcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
         rVsub{2} = zeros(length(data.idx_notredcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
+        rVsub{4} = zeros(length(data.idx_notredcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
         for iSub = 1:size(sBhv.sub.AllIdx,1)
-            rVsub{1}(:,:,iSub) = squeeze(mean(Vc(data.idx_redcell,:,sBhv.sub.AllIdx(iSub,:)),3));
-            rVsub{2}(:,:,iSub) = squeeze(mean(Vc(data.idx_notredcell,:,sBhv.sub.AllIdx(iSub,:)),3));
+            rVsub{1}(:,:,iSub) = squeeze(mean(Vc(data.idx_redcell,:,sBhv.sub.AllIdx(iSub,:)),3,'omitnan'));
+            rVsub{2}(:,:,iSub) = squeeze(std(Vc(data.idx_redcell,:,sBhv.sub.AllIdx(iSub,:)),0,3,'omitnan'));
+            rVsub{3}(:,:,iSub) = squeeze(mean(Vc(data.idx_notredcell,:,sBhv.sub.AllIdx(iSub,:)),3,'omitnan'));
+            rVsub{4}(:,:,iSub) = squeeze(std(Vc(data.idx_notredcell,:,sBhv.sub.AllIdx(iSub,:)),0,3,'omitnan'));
+            tempR = zeros(length(data.idx_redcell),size(Vc,2),nShuffle);
+            tempNR = zeros(length(data.idx_notredcell),size(Vc,2),nShuffle);
+            for iShuf = 1:nShuffle
+                shufIdx = randperm(size(sBhv.sub.AllIdx,2));
+                tempR(:,:,iShuf) = squeeze(mean(Vc(data.idx_redcell,:,sBhv.sub.AllIdx(iSub,shufIdx)),3,'omitnan'));
+                tempNR(:,:,iShuf) = squeeze(mean(Vc(data.idx_notredcell,:,sBhv.sub.AllIdx(iSub,shufIdx)),3,'omitnan'));
+            end
+            rVsub{5}(:,:,iSub) = mean(tempR),3,'omitnan');
+            rVsub{6}(:,:,iSub) = std(tempR,0,3,'omitnan');
+            rVsub{7}(:,:,iSub) = mean(tempNR),3,'omitnan');
+            rVsub{8}(:,:,iSub) = std(tempNR,0,3,'omitnan');
         end
         Vsub(i,:) = rVsub;
         disp('Computing mean PSTH... DONE!')
