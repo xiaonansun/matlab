@@ -20,3 +20,4 @@ S.dir.imagingSubDir = fullfile('suite2p', 'plane0');
 S.dir.bhvSubDir = fullfile('SpatialDisc', 'Session Data');
 
 S.segIdx = [1 0.75 1.25 0.5 1]; 
+S.cellTypes = {'CSP';'Plex';'Fez'};

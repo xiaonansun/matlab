@@ -7,7 +7,11 @@ S = twoP_settings;
 bhvRootDir = S.dir.bhvRootDir;
 bhvSubDir = S.dir.bhvSubDir;
 baseDir = S.dir.imagingRootDir; s2pDir = S.dir.imagingSubDir;
-
+celltype = cell(size(exps,1),1);
+for i = 1:length(S.cellTypes)
+    ctIdx = contains(exps(:,1),S.cellTypes{i});
+    celltype(ctIdx) = S.cellTypes(i);
+end
 segIdx = S.segIdx;
 
 D = cell(size(exps,1),10);
@@ -63,11 +67,12 @@ parfor i = 2:20
         
     end
 end
+Vsub = [Vsub celltype];
 
 disp(['All sessions combined in ' num2str(toc) ' seconds.']);
 
 % T = cell2table(D);
 % writetable(T,fullfile(S.dir.imagingRootDir,'analysis','trialNumberComparison.csv'));
 
-save(fullfile(S.dir.imagingRootDir,'analysis','aligned_combined.mat'),'D','-nocompression','-v7.3');
-
+% save(fullfile(S.dir.imagingRootDir,'analysis','aligned_combined.mat'),'D','-nocompression','-v7.3');
+save(fullfile(S.dir.imagingRootDir,'analysis','all_psth.mat'),'Vsub','-nocompression','-v7.3');

@@ -7,7 +7,11 @@ S = twoP_settings;
 bhvRootDir = S.dir.bhvRootDir;
 bhvSubDir = S.dir.bhvSubDir;
 baseDir = S.dir.imagingRootDir; s2pDir = S.dir.imagingSubDir;
-
+celltype = cell(size(exps,1),1);
+for i = 1:length(S.cellTypes)
+    ctIdx = contains(exps(:,1),S.cellTypes{i});
+    celltype{ctIdx} = S.cellTypes{i};
+end
 segIdx = S.segIdx;
 
 D = cell(size(exps,1),10);
@@ -52,13 +56,15 @@ parfor i = 2:20
         
         sBhv = twoP_bhvSubSelection(cBhv);
         
-        rVsub = vSub(i,:);
+        rVsub = Vsub(i,:);
         rVsub{1} = zeros(length(data.idx_redcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
-        rVsu VsubNR = zeros(length(data.idx_notredcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
+        rVsub{2} = zeros(length(data.idx_notredcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
         for iSub = 1:size(sBhv.sub.AllIdx,1)
-            VsubR(:,:,iSub) = squeeze(mean(Vc(data.idx_redcell,:,sBhv.sub.AllIdx(iSub,:)),3));
-            VsubNR(:,:,iSub) = squeeze(mean(Vc(data.idx_notredcell,:,sBhv.sub.AllIdx(iSub,:)),3));
+            rVsub{1}(:,:,iSub) = squeeze(mean(Vc(data.idx_redcell,:,sBhv.sub.AllIdx(iSub,:)),3));
+            rVsub{2}(:,:,iSub) = squeeze(mean(Vc(data.idx_notredcell,:,sBhv.sub.AllIdx(iSub,:)),3));
         end
+        Vsub(i,:) = rVsub;
+        
     end
 end
 
@@ -67,5 +73,5 @@ disp(['All sessions combined in ' num2str(toc) ' seconds.']);
 % T = cell2table(D);
 % writetable(T,fullfile(S.dir.imagingRootDir,'analysis','trialNumberComparison.csv'));
 
-save(fullfile(S.dir.imagingRootDir,'analysis','aligned_combined.mat'),'D','-nocompression','-v7.3');
-
+% save(fullfile(S.dir.imagingRootDir,'analysis','aligned_combined.mat'),'D','-nocompression','-v7.3');
+save(fullfile(S.dir.imagingRootDir,'analysis','all_psth.mat'),'Vsub','-nocompression','-v7.3');
