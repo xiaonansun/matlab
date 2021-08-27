@@ -11,14 +11,15 @@ baseDir = S.dir.imagingRootDir; s2pDir = S.dir.imagingSubDir;
 segIdx = S.segIdx;
 
 D = cell(size(exps,1),10);
+Vsub = cell(size(exps,1),2);
 D{1,1} = 'animal'; D{1,2} = 'session'; D{1,3} = 'Last trialNumber';
 D{1,4} = 'total trialNumbers'; D{1,5} = 'Number of trials in data.neural';
 D{1,6} = 'Number of rewarded trials';
 D{1,7} = 'Number of rewarded trials - corrected';
 
 tic
-parfor i = 2:size(exps,1)
-% parfor i = 2:10
+% parfor i = 2:size(exps,1)
+parfor i = 2:20
     try
         animal = colAnimal{i};
         session = colSession{i};
@@ -34,34 +35,39 @@ parfor i = 2:size(exps,1)
         rD{1} = animal; rD{2} = session; rD{3} =  max(data.trialNumbers);
         rD{4} = length(data.trialNumbers); rD{5} = size(data.neural,3);
         rD{6} = length(bhv.Rewarded);
-        
         data = twoP_adjustData(data,bhv);
-        
         opts = struct;
         opts.preStim = data.trialStimFrame*data.msPerFrame/1000; % Duration of the data (in seconds) before the stimulus occurs
         opts.frameRate = 1000/data.msPerFrame; % Frame rate of imaging
         sRate = opts.frameRate;
         segFrames = cumsum(floor(segIdx * sRate)); %max nr of frames per segment
-        
         cBhv = selectBehaviorTrials(bhv, data.trialNumbers); %% Match trial indices - IMPORTANT!
         rD{7} = length(cBhv.Rewarded);
-        
-        
         Vc = rateDisc_getBhvRealignment(data.neural, cBhv, segFrames, opts); % re-aligned imaging data to trial epoches
-        %         D{i,1} = Vc(data.idx_redcell,:,:);
         rD{8} = Vc(data.idx_redcell,:,:);
         rD{9} = Vc(data.idx_notredcell,:,:);
         rD{10} = cBhv;
-        
         D(i,:) = rD;
-        
         disp(['Loaded ' animal ' ' session '.']);
+        
+        sBhv = twoP_bhvSubSelection(cBhv);
+        
+        rVsub = Vsub(i,:);
+        rVsub{1} = zeros(length(data.idx_redcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
+        rVsub{2} = zeros(length(data.idx_notredcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
+        for iSub = 1:size(sBhv.sub.AllIdx,1)
+            rVsub{1}(:,:,iSub) = squeeze(mean(Vc(data.idx_redcell,:,sBhv.sub.AllIdx(iSub,:)),3));
+            rVsub{2}(:,:,iSub) = squeeze(mean(Vc(data.idx_notredcell,:,sBhv.sub.AllIdx(iSub,:)),3));
+        end
+        Vsub(i,:) = rVsub;
         
     end
 end
 
-disp(['All sessions loaded in ' num2str(toc) ' seconds.']);
+disp(['All sessions combined in ' num2str(toc) ' seconds.']);
 
 % T = cell2table(D);
 % writetable(T,fullfile(S.dir.imagingRootDir,'analysis','trialNumberComparison.csv'));
+
 save(fullfile(S.dir.imagingRootDir,'analysis','aligned_combined.mat'),'D','-nocompression','-v7.3');
+

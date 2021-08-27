@@ -28,7 +28,7 @@ lick(1,:) = bhv.ResponseSide(data.trialNumbers);
 % relative to trial onset
 leftLickIdx=find(cellfun(@numel,lickL)>=minLicks); % Finds the trial 
 rightLickIdx=find(cellfun(@numel,lickR)>=minLicks);
-[val, ir, il]=intersect(rightLickIdx,leftLickIdx);
+[~, ir, il]=intersect(rightLickIdx,leftLickIdx);
 rightLickIdx(ir)=[]; leftLickIdx(il)=[]; % remove trials where the animal licked both spouts more than once
 leftLickTiming=cellfun(@(x)x(1),lickL((leftLickIdx)));
 rightLickTiming=cellfun(@(x)x(1),lickR(rightLickIdx)); %compute the timing of left or right licks
@@ -36,7 +36,7 @@ lick(2,leftLickIdx)=leftLickTiming; lick(2,rightLickIdx)=rightLickTiming; % comp
 lick(2,lick(2,:)==0)=NaN;
 lick(2,lick(2,:)>nanmean(lick(2,:))+nanstd(lick(2,:))*stdThresh)=NaN;
 
-% compute the timing of the first lick of a true lick response relative to
+% Compute the timing of the first lick of a true lick response relative to
 % the onset of the sensory stimulus
 lick(3,:)=lick(2,:)-stimTime;
 

@@ -4,15 +4,15 @@
 clear animal session data npy SessionData events; close all;
 
 % Specify session to load
-animal = 'CSP30';
-session = '200301a';
-[npy,data,SessionData,bhvFilePath,suite2pDir]=twoP_loadImgBhvData(animal,session, true, 10, false);
+animal = 'Plex50';
+session = '200401a';
+[data,SessionData]=twoP_loadImgBhvData(animal,session, true, 10, true);
 
 % baseFileName = [animal '_' session];
 % ----- Makes adjustments to the twoP data struct ----- %%
 data = twoP_adjustData(data,SessionData);
 
-% ----- Define event-aligned matrices ----- %%
+% ----- Define lick-aligned (true lick) matrices ----- %%
 [lick,data.lickWinIdx,data.lickWinMs,data.dataLick, data.dataLickTrialNumbers]=twoP_alignToLick(data, SessionData);
 
 % ----- Behavior analysis----- %%
@@ -20,11 +20,11 @@ data = twoP_adjustData(data,SessionData);
 % % organize stimulus events of each trial (row) into columns: column 1 is
 % % left and column 2 is right
 % events = cellfun(@(x) x{:},[cellfun(@(x) x(1),events,'UniformOutput',false)' cellfun(@(x) x(2),events,'UniformOutput',false)'],'UniformOutput',false); % In this line, we count the number of auditory events emerging from the left or right speakers and report them in two columns (column 1 for left and 2 for right)
-% frEvents= cellfun(@numel,events);
+% numEvents= cellfun(@numel,events);
 
-E = behavior_getStimEvents(SessionData); events = E.events; frEvents = E.frEvents; ratioEvents = E.ratioEvents;
-% frEvents(:,4)=(SessionData.CorrectSide)';
-% frEvents(:,5)=(SessionData.DistStim)'; % distractor
+E = behavior_getStimEvents(SessionData); events = E.events; numEvents = E.numEvents; ratioEvents = E.ratioEvents;
+% numEvents(:,4)=(SessionData.CorrectSide)';
+% numEvents(:,5)=(SessionData.DistStim)'; % distractor
 
 %% Logistic regression decoder 
 
