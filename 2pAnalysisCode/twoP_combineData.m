@@ -22,8 +22,8 @@ D{1,6} = 'Number of rewarded trials';
 D{1,7} = 'Number of rewarded trials - corrected';
 
 tic
-% parfor i = 2:size(exps,1)
-parfor i = 2:20
+parfor i = 2:size(exps,1)
+% parfor i = 2:20
     try
         animal = colAnimal{i};
         session = colSession{i};
