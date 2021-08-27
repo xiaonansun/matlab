@@ -4,6 +4,7 @@ exps = twoP_getAcquisitionRecord;
 colAnimal = exps(:,1); colSession = exps(:,6);
 
 S = twoP_settings;
+if S.isUnix == true; parpool('local',16); end
 bhvRootDir = S.dir.bhvRootDir;
 bhvSubDir = S.dir.bhvSubDir;
 baseDir = S.dir.imagingRootDir; s2pDir = S.dir.imagingSubDir;
@@ -56,6 +57,7 @@ parfor i = 2:size(exps,1)
         
         sBhv = twoP_bhvSubSelection(cBhv);
         
+        disp('Computing mean PSTH...');
         rVsub = Vsub(i,:);
         rVsub{1} = zeros(length(data.idx_redcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
         rVsub{2} = zeros(length(data.idx_notredcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
@@ -64,7 +66,7 @@ parfor i = 2:size(exps,1)
             rVsub{2}(:,:,iSub) = squeeze(mean(Vc(data.idx_notredcell,:,sBhv.sub.AllIdx(iSub,:)),3));
         end
         Vsub(i,:) = rVsub;
-        
+        disp('Computing mean PSTH... DONE!')
     end
 end
 Vsub = [Vsub celltype];
@@ -75,4 +77,6 @@ disp(['All sessions combined in ' num2str(toc) ' seconds.']);
 % writetable(T,fullfile(S.dir.imagingRootDir,'analysis','trialNumberComparison.csv'));
 
 % save(fullfile(S.dir.imagingRootDir,'analysis','aligned_combined.mat'),'D','-nocompression','-v7.3');
+tic
 save(fullfile(S.dir.imagingRootDir,'analysis','all_psth.mat'),'Vsub','-nocompression','-v7.3');
+disp(['Data saved in' num2str(toc) ' seconds.']);
