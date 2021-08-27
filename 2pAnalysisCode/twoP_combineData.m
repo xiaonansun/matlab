@@ -5,7 +5,7 @@ colAnimal = exps(:,1); colSession = exps(:,6);
 
 S = twoP_settings;
 nShuffle = S.nShuffle;
-if S.isUnix == true; parpool('local',16); end
+if S.isUnix == true; parpool('local',32); end
 bhvRootDir = S.dir.bhvRootDir;
 bhvSubDir = S.dir.bhvSubDir;
 baseDir = S.dir.imagingRootDir; s2pDir = S.dir.imagingSubDir;
@@ -17,7 +17,7 @@ end
 segIdx = S.segIdx;
 
 D = cell(size(exps,1),10);
-Vsub = cell(size(exps,1),2);
+Vsub = cell(size(exps,1),8);
 D{1,1} = 'animal'; D{1,2} = 'session'; D{1,3} = 'Last trialNumber';
 D{1,4} = 'total trialNumbers'; D{1,5} = 'Number of trials in data.neural';
 D{1,6} = 'Number of rewarded trials';
