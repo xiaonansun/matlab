@@ -19,6 +19,7 @@ dirContent = dir(fullfile(inputDir,'*5X.tif'));
 
 if isempty(dirContent)
    disp('No TIFF files exist in directory. Function terminated.');
+   res = [];
    return
 end
 

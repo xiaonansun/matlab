@@ -10,6 +10,7 @@ bhvRootDir = S.dir.bhvRootDir;
 bhvSubDir = S.dir.bhvSubDir;
 baseDir = S.dir.imagingRootDir; s2pDir = S.dir.imagingSubDir;
 celltype = cell(size(exps,1),1);
+trialTypes = {};
 for i = 1:length(S.cellTypes)
     ctIdx = contains(exps(:,1),S.cellTypes{i});
     celltype(ctIdx) = S.cellTypes(i);
@@ -86,10 +87,12 @@ parfor i = 2:size(exps,1)
             rVsub{8}(:,:,iSub) = std(tempNR,0,3,'omitnan');
         end
         Vsub(i,:) = rVsub;
+        trialTypes(i,:) = sBhv.sub.names;
         disp('Computing mean PSTH... DONE!')
     end
 end
 Vsub = [Vsub celltype];
+% trialTypes = sBhv.sub.names;
 
 disp(['All sessions combined in ' num2str(toc) ' seconds.']);
 
@@ -98,5 +101,5 @@ disp(['All sessions combined in ' num2str(toc) ' seconds.']);
 
 % save(fullfile(S.dir.imagingRootDir,'analysis','aligned_combined.mat'),'D','-nocompression','-v7.3');
 tic
-save(fullfile(S.dir.imagingRootDir,'analysis','all_psth.mat'),'Vsub','-nocompression','-v7.3');
+save(fullfile(S.dir.imagingRootDir,'analysis','all_psth.mat'),'Vsub','trialTypes','-nocompression','-v7.3');
 disp(['Data saved in' num2str(toc) ' seconds.']);
