@@ -22,7 +22,7 @@ dirContent = natsortfiles({dirContent.name});
 saveFileName = fullfile(outputDir,[sampleID '_5X.tif']);
 
 if exist(saveFileName,'file')
-    delete(saveFileName);
+    delete saveFileName
 end
 
 if isempty(dirContent)

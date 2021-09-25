@@ -12,15 +12,17 @@ catCNR = cell(1,length(S.cellTypes));
 catSR = cell(1,length(S.cellTypes));
 catSNR = cell(1,length(S.cellTypes));
 
+trialTypes = {'StimAllRight','StimAllLeft','StimEasyRight','StimEasyLeft','ResponseAll','ResponseLeft','ResponseRight','RewardedAll','RewardedLeft','RewardedRight','ErrorAll','ErrorLeft','ErrorRight'};
+lineWidth = 1;
+
 noCharIdx = cellfun(@isempty,Vsub(:,end));
 Vsub{noCharIdx,end} = '';
 
-
 for i = 1:length(P)
     clear ctIdx;
-    ctIdx = contains(Vsub(:,end),S.cellTypes{i});
+    ctIdx = contains(Vsub(:,end),S.cellTypes{i}); %% ctIdx: cell type index
     ctIdx = ~cellfun(@isempty,Vsub(:,1)) & ctIdx;
-    CR = Vsub(ctIdx,1); CNR= Vsub(ctIdx,3);
+    CR = Vsub(ctIdx,1); CNR= Vsub(ctIdx,3); 
     SR = Vsub(ctIdx,5); SNR = Vsub(ctIdx,7);
     catCR{i} = vertcat(CR{:}); catCNR{i} = vertcat(CNR{:});
     catSR{i} = vertcat(SR{:}); catSNR{i} = vertcat(SNR{:});
@@ -47,19 +49,26 @@ hT = tiledlayout(length(P),size(P{1},3),...
 for iF = 1:length(P)
     for iT = 1:size(P{iF},3)
         nexttile; hold on;
-        line(x,y(iF).R(:,iT),'Color','r'); line(x,y(iF).NR(:,iT),'Color','g');
+        line(x,y(iF).R(:,iT),'Color','r',...
+            'LineWidth',lineWidth); 
+        line(x,y(iF).NR(:,iT),'Color','g',...
+            'LineWidth',lineWidth);
         line(x,y(iF).SR(:,iT),...
             'Color','r',...
-            'LineStyle','--');
+            'LineStyle','--',...
+            'LineWidth',lineWidth);
         line(x,y(iF).SR(:,iT),...
             'Color','g',...
-            'LineStyle','--');
+            'LineStyle','--',...
+            'LineWidth',lineWidth);
         line(x,y(iF).P(:,iT),...
             'Color','k',...
-            'LineStyle','-');
+            'LineStyle','-',...
+            'LineWidth',lineWidth);
         line(x,y(iF).SP(:,iT),...
             'Color','k',...
-            'LineStyle','--');
+            'LineStyle','--',...
+            'LineWidth',lineWidth);
         ylim([yLimit(iF,1) yLimit(iF,2)]);
         ax = gca;
         ax = fig_configAxis(ax);
@@ -82,9 +91,12 @@ hTdiff = tiledlayout(length(P),size(P{1},3),...
 for iF = 1:length(P)
     for iT = 1:size(P{iF},3)
         nexttile; hold on;
-        line(x,d(iF).R(:,iT),'Color','r');
-        line(x,d(iF).NR(:,iT),'Color','g');
-        line(x,d(iF).P(:,iT),'Color','k');
+        line(x,d(iF).R(:,iT),'Color','r',...
+            'LineWidth',lineWidth);
+        line(x,d(iF).NR(:,iT),'Color','g',...
+            'LineWidth',lineWidth);
+        line(x,d(iF).P(:,iT),'Color','k',...
+            'LineWidth',lineWidth);
         yline(0);
         ylim([dLimit(iF,1) dLimit(iF,2)]);
         ax = gca;

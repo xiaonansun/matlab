@@ -1,5 +1,9 @@
 % function twoP_combineData
 
+% This function combines inferred spikes across sessions into a single
+% cell by performing the following:
+% 
+
 exps = twoP_getAcquisitionRecord;
 colAnimal = exps(:,1); colSession = exps(:,6);
 
@@ -85,14 +89,14 @@ parfor i = 2:size(exps,1)
             rVsub{6}(:,:,iSub) = std(tempR,0,3,'omitnan');
             rVsub{7}(:,:,iSub) = mean(tempNR,3,'omitnan');
             rVsub{8}(:,:,iSub) = std(tempNR,0,3,'omitnan');
-            trialTypes = sBhv.sub.names;
         end
         Vsub(i,:) = rVsub;
+        trialTypes(i,:) = sBhv.sub.names;
         disp('Computing mean PSTH... DONE!')
     end
 end
 Vsub = [Vsub celltype];
-trialTypes = sBhv.sub.names;
+% trialTypes = sBhv.sub.names;
 
 disp(['All sessions combined in ' num2str(toc) ' seconds.']);
 
