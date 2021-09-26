@@ -15,6 +15,12 @@ bhvSubDir = S.dir.bhvSubDir;
 baseDir = S.dir.imagingRootDir; s2pDir = S.dir.imagingSubDir;
 celltype = cell(size(exps,1),1);
 trialTypes = {};
+allVcDir = fullfile(baseDir,'allVc');
+
+if ~exist(allVcDir,'dir')
+    mkdir(allVcDir);
+end
+
 for i = 1:length(S.cellTypes)
     ctIdx = contains(exps(:,1),S.cellTypes{i});
     celltype(ctIdx) = S.cellTypes(i);
@@ -54,7 +60,7 @@ parfor i = 2:size(exps,1) % This loop performs computations for individual sessi
         segFrames = cumsum(floor(segIdx * sRate)); %max nr of frames per segment
         cBhv = selectBehaviorTrials(bhv, data.trialNumbers); %% Match trial indices - IMPORTANT!
         rD{7} = length(cBhv.Rewarded);
-        Vc = rateDisc_getBhvRealignment(data.neural, cBhv, segFrames, opts); % re-aligned imaging data to trial epoches
+        Vc = rateDisc_getBhvRealignment(data.neural, cBhv, segFrames, opts, animal, session); % re-aligned imaging data to trial epoches
         rD{8} = Vc(data.idx_redcell,:,:);
         rD{9} = Vc(data.idx_notredcell,:,:);
         rD{10} = cBhv;

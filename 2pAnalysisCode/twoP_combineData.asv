@@ -15,6 +15,12 @@ bhvSubDir = S.dir.bhvSubDir;
 baseDir = S.dir.imagingRootDir; s2pDir = S.dir.imagingSubDir;
 celltype = cell(size(exps,1),1);
 trialTypes = {};
+allVcDir = fullfile(baseDir,'allVc');
+
+if ~exist(allVcDir,'dir')
+    mkdir(allVcDir);
+end
+
 for i = 1:length(S.cellTypes)
     ctIdx = contains(exps(:,1),S.cellTypes{i});
     celltype(ctIdx) = S.cellTypes(i);
@@ -29,7 +35,7 @@ D{1,6} = 'Number of rewarded trials';
 D{1,7} = 'Number of rewarded trials - corrected';
 
 tic
-parfor i = 2:size(exps,1)
+parfor i = 2:size(exps,1) % This loop performs computations for individual sessions
 % parfor i = 2:20
     try
         animal = colAnimal{i};
@@ -55,6 +61,7 @@ parfor i = 2:size(exps,1)
         cBhv = selectBehaviorTrials(bhv, data.trialNumbers); %% Match trial indices - IMPORTANT!
         rD{7} = length(cBhv.Rewarded);
         Vc = rateDisc_getBhvRealignment(data.neural, cBhv, segFrames, opts); % re-aligned imaging data to trial epoches
+        save(fullfile(allVcDir,[animal '_' session '.mat']),'Vc');
         rD{8} = Vc(data.idx_redcell,:,:);
         rD{9} = Vc(data.idx_notredcell,:,:);
         rD{10} = cBhv;
@@ -65,7 +72,7 @@ parfor i = 2:size(exps,1)
         
         disp('Computing mean PSTH...');
         rVsub = Vsub(i,:);
-        rVsub{1} = zeros(length(data.idx_redcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
+        rVsub{1} = zeros(length(data.idx_redcell),size(Vc,2),size(sBhv.sub.AllIdx,1)); % Pre-allocates memory
         rVsub{2} = zeros(length(data.idx_redcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
         rVsub{3} = zeros(length(data.idx_notredcell),size(Vc,2),size(sBhv.sub.AllIdx,1));
         rVsub{4} = zeros(length(data.idx_notredcell),size(Vc,2),size(sBhv.sub.AllIdx,1));

@@ -1,12 +1,10 @@
-function newVc = rateDisc_getBhvRealignment(Vc, cBhv, segFrames, opts, varargin)
+function newVc = rateDisc_getBhvRealignment(Vc, cBhv, segFrames, opts)
 % code to re-align Vc so each trial is aligned to different task episodes.
 % Alignment is done to baseline, handle, stimulus and delay period.
 % 'segFrames' defines how many frames per task episodes should be in the
 % newVc output. SegFrames should be cumulative, so say 'baseline should be
 % from trial 1 to segFrames(1), handle data should be from segFrames(1) to
 % segFrames(2) and so on...
-animal = varargin{1}; session = varargin{2};
-S = twoP_settings;
 
 %% align imaging data using Session data
 rejCnt = 0;
@@ -54,9 +52,6 @@ if rejCnt > 0
     warning(['!!! Couldnt use ' num2str(rejCnt) ' trials because of broken handle initialization time !!!'])
 end
 
-%% Save Vc
+%%
 Vc = newVc;
-VcSavePath = fullfile(S.dir.imagingRootDir,animal,'imaging',session,S.dir.imagingSubDir,'Vc.mat');
-save(VcSavePath,'Vc');
-disp(['Saved Vc as ' VcSavePath]);
-
+save()

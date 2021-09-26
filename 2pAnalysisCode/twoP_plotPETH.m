@@ -1,5 +1,5 @@
 if ~exist('Vsub','var')
-    load('\\grid-hs\churchland_nlsas_data\data\richard_s2p_npy\analysis\all_psth.mat');
+    load('\\grid-hs\churchland_nlsas_data\data\richard_s2p_npy\analysis\all_psth.mat','Vsub','trialTypes');
 end
 clear fPETH fDiff;
 
@@ -12,7 +12,7 @@ catCNR = cell(1,length(S.cellTypes));
 catSR = cell(1,length(S.cellTypes));
 catSNR = cell(1,length(S.cellTypes));
 
-trialTypes = {'StimAllRight','StimAllLeft','StimEasyRight','StimEasyLeft','ResponseAll','ResponseLeft','ResponseRight','RewardedAll','RewardedLeft','RewardedRight','ErrorAll','ErrorLeft','ErrorRight'};
+% trialTypes = {'StimAllRight','StimAllLeft','StimEasyRight','StimEasyLeft','ResponseAll','ResponseLeft','ResponseRight','RewardedAll','RewardedLeft','RewardedRight','ErrorAll','ErrorLeft','ErrorRight'};
 lineWidth = 1;
 
 noCharIdx = cellfun(@isempty,Vsub(:,end));
@@ -72,7 +72,7 @@ for iF = 1:length(P)
         ylim([yLimit(iF,1) yLimit(iF,2)]);
         ax = gca;
         ax = fig_configAxis(ax);
-        if iF == 1; title(trialTypes{iT}); end
+        if iF == 1; title(trialTypes{2,iT}); end
         if iF ~= 3; ax.XTickLabel = []; ax.XAxis.Color = 'none'; end
         if iT == 1; ylabel(S.cellTypes{iF}); end
         if iT ~= 1; ax.YTickLabel = []; ax.YAxis.Color = 'none'; end
@@ -101,7 +101,7 @@ for iF = 1:length(P)
         ylim([dLimit(iF,1) dLimit(iF,2)]);
         ax = gca;
         ax = fig_configAxis(ax);
-        if iF == 1; title(trialTypes{iT}); end
+        if iF == 1; title(trialTypes{2,iT}); end
         if iF ~= 3; ax.XTickLabel = []; ax.XAxis.Color = 'none'; end
         if iT == 1; ylabel(S.cellTypes{iF}); end
         if iT ~= 1; ax.YTickLabel = []; ax.YAxis.Color = 'none'; end
