@@ -6,10 +6,11 @@
 
 exps = twoP_getAcquisitionRecord;
 colAnimal = exps(:,1); colSession = exps(:,6);
+nThreads = 8; % <<< --- modify this as needed
 
 S = twoP_settings;
 nShuffle = S.nShuffle;
-if S.isUnix == true; parpool('local',32); end
+if S.isUnix == true; parpool('local',nThreads); end  
 bhvRootDir = S.dir.bhvRootDir;
 bhvSubDir = S.dir.bhvSubDir;
 baseDir = S.dir.imagingRootDir; s2pDir = S.dir.imagingSubDir;
@@ -53,12 +54,10 @@ parfor i = 2:size(exps,1) % This loop performs computations for individual sessi
         rD{4} = length(data.trialNumbers); rD{5} = size(data.neural,3);
         rD{6} = length(bhv.Rewarded);
         data = twoP_adjustData(data,bhv);
-        opts = struct;
-        opts.preStim = data.trialStimFrame*data.msPerFrame/1000; % Duration of the data (in seconds) before the stimulus occurs
+        opts = struct; opts.preStim = data.trialStimFrame*data.msPerFrame/1000; % Duration of the data (in seconds) before the stimulus occurs
         opts.frameRate = 1000/data.msPerFrame; % Frame rate of imaging
-        sRate = opts.frameRate;
-        segFrames = cumsum(floor(segIdx * sRate)); %max nr of frames per segment
-        cBhv = selectBehaviorTrials(bhv, data.trialNumbers); %% Match trial indices - IMPORTANT!
+        sRate = opts.frameRate; segFrames = cumsum(floor(segIdx * sRate)); % max nr of frames per segment
+        cBhv = selectBehaviorTrials(bhv, data.trialNumbers, animal, session); %% Match trial indices - IMPORTANT!
         rD{7} = length(cBhv.Rewarded);
         Vc = rateDisc_getBhvRealignment(data.neural, cBhv, segFrames, opts, animal, session); % re-aligned imaging data to trial epoches
         rD{8} = Vc(data.idx_redcell,:,:);
@@ -112,4 +111,4 @@ disp(['All sessions combined in ' num2str(toc) ' seconds.']);
 % save(fullfile(S.dir.imagingRootDir,'analysis','aligned_combined.mat'),'D','-nocompression','-v7.3');
 tic
 save(fullfile(S.dir.imagingRootDir,'analysis','all_psth.mat'),'Vsub','trialTypes','-nocompression','-v7.3');
-disp(['Data saved in' num2str(toc) ' seconds.']);
+disp(['Data saved in ' num2str(toc) ' seconds.']);

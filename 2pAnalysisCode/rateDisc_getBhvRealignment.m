@@ -5,6 +5,10 @@ function newVc = rateDisc_getBhvRealignment(Vc, cBhv, segFrames, opts, varargin)
 % newVc output. SegFrames should be cumulative, so say 'baseline should be
 % from trial 1 to segFrames(1), handle data should be from segFrames(1) to
 % segFrames(2) and so on...
+
+% 2021-09-26 modified by Richard: two optional inputs can specify the
+% animal and session ID, which in turn allows Vc to be saved
+
 animal = varargin{1}; session = varargin{2};
 S = twoP_settings;
 

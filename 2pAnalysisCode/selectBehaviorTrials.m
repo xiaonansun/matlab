@@ -1,8 +1,12 @@
-function bhv = selectBehaviorTrials(bhv,trials)
+function bhv = selectBehaviorTrials(bhv,trials,varargin)
 % Function to select a subset of trials/settings from selected 'trials' in a 
 % larger array 'bhv' that has behavioral data. 'trials' should be a vector of 
 % trial numbers that can be used. 
 % Usage: bhv = selectBehaviorTrials(bhv,trials)
+% 2021-09-27 modified by Richard Sun to save in twoP data folder
+
+animal = varargin{1}; session = varargin{2};
+S = twoP_settings;
 
 %% get fieldnames
 if isempty(bhv)
@@ -60,3 +64,7 @@ for iFields = 1:size(bFields,1)
         end
     end 
 end
+
+%% Save cBhv two photon data folders
+cBhv = bhv;
+save(fullfile(S.dir.imagingRootDir,animal,'imaging',session,S.dir.imagingSubDir,'cBhv.mat'),'cBhv');
