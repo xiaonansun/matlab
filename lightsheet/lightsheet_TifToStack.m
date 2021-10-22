@@ -13,13 +13,22 @@ if ~exist('outputDir','var') || isempty(outputDir)
     outputDir = inputDir;
 end
 
+if ~exist('sampleID','var') || isempty(sampleID)
+    sampleID = regexp(inputDir,'\w*sample\w*','match');
+    if isempty(sampleID)
+    disp('Directory path of tiff files missing: user must specify input directory (inputDir)! Function terminated.');
+    return
+    end
+end
+
 options.big = true;
 options.append = true;
 options.message = false;
 
-dirContent = dir(fullfile(inputDir,'*5X.tif'));
+dirContent = dir(fullfile(inputDir,'*X.tif'));
 dirContent = natsortfiles({dirContent.name});
-saveFileName = fullfile(outputDir,[sampleID '_5X.tif']);
+idxFNtail = strfind(dirContent{1},'X.tif');
+saveFileName = fullfile(outputDir,[sampleID{:} '_' dirContent{1}(idxFNtail-1) 'X.tif']);
 
 if exist(saveFileName,'file')
     delete(saveFileName);

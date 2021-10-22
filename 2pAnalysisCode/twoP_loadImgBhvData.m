@@ -14,7 +14,7 @@ function [data,bhv,npy]=twoP_loadImgBhvData(varargin)
 % (4) bhvFilePath: path of the Bpod behavior file
 % (5) suite2pDir: directory of the s2p-processed 2p data files
 disp(newline);
-
+exps = twoP_getAcquisitionRecord;
 animal = varargin{1};
 session = varargin{2};
 
@@ -92,7 +92,7 @@ try
     % organize suite2p data into npy files (ROI and spiking)
     if loadSavedData == false || nargout > 2
         disp('LOADING: npy file...'); tic;
-        npy = twoP_importSuite2pNPY(animal,session, s2pDataDir, codeDir);
+        npy = twoP_importSuite2pNPY(animal,session);
         disp(['LOADED: The .npy file was loaded in ' num2str(toc) ' seconds.'])
         
         % IMPORTANT!!! smoothes inferred spikes with  a gaussian filter
@@ -104,10 +104,11 @@ try
         
         % Creates stimulus-aligned data matrices and saves data.mat in the
         % same directory as npy files
-        disp(['Trial alignment to stimulus onset was completed in ' num2str(toc) ' seconds.']); tic
+        tic
         try
             data = twoP_alignDetectionTask(npy.ops, spks, npy.iscell, npy.redcell, npy.bin_MScan_filepath); % align suite2p data to sensory stimulus
         catch ME
+            data.ME = ME;
         end
         disp(['Trial alignment to stimulus onset was completed in ' num2str(toc) ' seconds.'])
         
@@ -121,12 +122,17 @@ try
         data = load(dataPath ,'data'); data = data.data;
     end
     
+    idxRow = twoP_findRowAcquisitionRecord(animal,session);
+    sFilenames = regexp(exps{idxRow,9},'\;','split','once');
+
     % Load behavior data
     disp('LOADING: behavior data...');
     bhvDir = fullfile(bhvRootDir,animal,bhvSubDir);
+    if length(sFilenames) > 1
+        bhv = twoP_RepairSession(animal,sFilenames,data.trialCodes);
+    else
     [bhv,bhvFilePath] = twoP_loadBehaviorSession(animal,session,bhvDir);
-    % bhv = bhv.bhv;
-    % [filepath,bhvFileName,ext]=fileparts(bhvFilePath); clear filepath ext;
+    end
     disp('LOADED: behavior data.');
     
     suite2pDir = fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir); data.suite2pDir = suite2pDir;

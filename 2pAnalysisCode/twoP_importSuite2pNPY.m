@@ -1,4 +1,4 @@
-function npy = twoP_importSuite2pNPY(animal, session, suite2p_output_dir, codeDir)
+function npy = twoP_importSuite2pNPY(animal, session)
 % imports Fall.mat and chan2 data
 
 % Requires s2ptomat.py
@@ -16,6 +16,10 @@ function npy = twoP_importSuite2pNPY(animal, session, suite2p_output_dir, codeDi
 % suite2p_output_dir = fullfile(suite2p_base_dir, animal, 'imaging', session, 'suite2p\plane0');
 
 % s2ptomat_path = '"C:\Users\Xiaonan Richard Sun\Dropbox\Users\Richard\matlab\2pAnalysisCode\s2ptomat.py"';
+S = twoP_settings;
+
+suite2p_output_dir = fullfile(S.dir.imagingRootDir,animal,'imaging',session,S.dir.imagingSubDir);
+codeDir = fullfile(S.dir.codeRootDir,'2pAnalysisCode');
 pyCodePath = fullfile(codeDir,'s2ptomat.py'); pyCodePath = ['"' pyCodePath '"'];
 [status, result] = system(['python ' pyCodePath ' ' suite2p_output_dir]); % Converts ops.npy and stat.npy to ops.mat and stat.mat
 load(fullfile(suite2p_output_dir, 'ops.mat'),'ops'); load(fullfile(suite2p_output_dir, 'stat.mat'),'stat');
@@ -25,7 +29,7 @@ npy_content = dir(fullfile([suite2p_output_dir], '*.npy')); npy_content = {npy_c
 
 for i_npy = 1:length(npy_content) % loads all npyfiles except for ops and stat, which cannot be read by readNPY.m
     [filepath, name, ext] = fileparts(fullfile(suite2p_output_dir, npy_content{i_npy}));
-    if name ~= convertCharsToStrings('ops') && name ~= convertCharsToStrings('stat')
+    if name ~= convertCharsToStrings('ops') && name ~= convertCharsToStrings('stat') && name ~= convertCharsToStrings('stat_orig')
         npy.(name) = readNPY(fullfile(suite2p_output_dir, npy_content{i_npy}));
     else
         continue
@@ -33,10 +37,21 @@ for i_npy = 1:length(npy_content) % loads all npyfiles except for ops and stat, 
 end
 
 iSub = strfind(suite2p_output_dir,filesep);
-bin_MScan_dir = suite2p_output_dir(1:iSub(end-1));bin_MScan_dir_content = dir(bin_MScan_dir);
+% subDirs = regexp(suite2p_output_dir,'\','split');
+% [s2pPath,~,~] = fileparts(suite2p_output_dir);
+
+bin_MScan_dir = suite2p_output_dir(1:iSub(end-1)); 
+bin_MScan_dir_content = dir(bin_MScan_dir);
+bin_MScan_dir_content = dir(fullfile(bin_MScan_dir,'*.bin'));
 
 % bin_MScan_dir = fullfile(suite2p_base_dir, animal, 'imaging', session, filesep); 
-npy.bin_MScan_filepath = [bin_MScan_dir bin_MScan_dir_content(contains({bin_MScan_dir_content.name}','bin')).name];
+% if size(bin_MScan_dir_content,1) > 1
+    for i = 1:size(bin_MScan_dir_content,1)
+        npy.bin_MScan_filepath{i} = fullfile(bin_MScan_dir_content(i).folder,bin_MScan_dir_content(i).name);
+    end
+% else
+% npy.bin_MScan_filepath = [bin_MScan_dir bin_MScan_dir_content(contains({bin_MScan_dir_content.name}','bin')).name];
+% end
 % npy.bin_MScan_filepath = bin_MScan_filepath;
 
 npy.bin_chan1_filepath = fullfile(suite2p_output_dir, 'data.bin');

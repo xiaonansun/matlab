@@ -5,11 +5,33 @@ function newVc = rateDisc_getBhvRealignment(Vc, cBhv, segFrames, opts, varargin)
 % newVc output. SegFrames should be cumulative, so say 'baseline should be
 % from trial 1 to segFrames(1), handle data should be from segFrames(1) to
 % segFrames(2) and so on...
-
 % 2021-09-26 modified by Richard: two optional inputs can specify the
 % animal and session ID, which in turn allows Vc to be saved
+% 2021-10-04 added some default parameters so the function can run without
+% segFrames, opts, animal, and session
 
-animal = varargin{1}; session = varargin{2};
+trialStimFrame = 93; 
+msPerFrame = 32.3638;
+segIdx = [1 0.75 1.25 0.5 1];
+
+if ~exist('opts','var') || isempty(opts)
+    opts.preStim = trialStimFrame*msPerFrame/1000; % Duration of the data (in seconds) before the stimulus occurs
+    opts.frameRate = 1000/msPerFrame; % Frame rate of imaging
+    sRate = opts.frameRate;
+end
+
+if ~exist('segFrames','var') || isempty(segFrames)
+    segFrames = cumsum(floor(segIdx * sRate)); %max nr of frames per segment
+end
+
+if nargin == 0
+    disp('Missing animal and session ID imnput, data will not be saved.')
+elseif nargin == 1
+    disp('Missing session input, data will not be saved.')
+elseif nargin == 2
+    animal = varargin{1}; session = varargin{2};
+end
+
 S = twoP_settings;
 
 %% align imaging data using Session data
@@ -60,7 +82,9 @@ end
 
 %% Save Vc
 Vc = newVc;
-VcSavePath = fullfile(S.dir.imagingRootDir,animal,'imaging',session,S.dir.imagingSubDir,'Vc.mat');
-save(VcSavePath,'Vc');
-disp(['Saved Vc as ' VcSavePath]);
 
+if exist('animal','var') && exist('session','var')
+    VcSavePath = fullfile(S.dir.imagingRootDir,animal,'imaging',session,S.dir.imagingSubDir,'Vc.mat');
+    save(VcSavePath,'Vc');
+    disp(['Saved Vc as ' VcSavePath]);
+end

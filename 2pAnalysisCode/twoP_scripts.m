@@ -3,15 +3,24 @@
 %% Load trial-aligned fluorescence data
 clear animal session data npy SessionData events; close all;
 
-% Specify session to load
-animal = 'Plex50';
-session = '200401a';
-[data,SessionData]=twoP_loadImgBhvData(animal,session, true, 10, true);
+% ----- Specify session to load ----- %%
+animal = 'CSP27';
+session = '20200329';
+[data,SessionData]=twoP_loadImgBhvData(animal,session, true, 10, false);
 
-% baseFileName = [animal '_' session];
+%
+D = twoP_combineStimAlignedData(data);
+D = twoP_adjustData(D,SessionData);
+
 % ----- Makes adjustments to the twoP data struct ----- %%
-data = twoP_adjustData(data,SessionData);
 
+cBhv = selectBehaviorTrials(SessionData, D.trialNumbers,animal, session); %% very important in matching trial indices
+
+Vc = rateDisc_getBhvRealignment(D.neural, cBhv, [], [], animal, session); % re-aligned imaging data to trial epoches
+
+twoP_compareStimTimes(D,cBhv);
+
+%%
 % ----- Define lick-aligned (true lick) matrices ----- %%
 [lick,data.lickWinIdx,data.lickWinMs,data.dataLick, data.dataLickTrialNumbers]=twoP_alignToLick(data, SessionData);
 

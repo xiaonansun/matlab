@@ -1,6 +1,6 @@
 function data = twoP_adjustData(data,bhv)
 
-% Sometimes the stimulus-aligned data array contains more trials (3rd
+% Sometimes the stimulus-aligned 2P data array contains more trials (3rd
 % dimension) than the number of trial codes received. This code discards those extra trials, 
 % which is usually one extra trial at the end of the session.
 % THIS CODE ONLY NEEDS THE PROCESSED 2P IMAGING STRUCTURE (data)
