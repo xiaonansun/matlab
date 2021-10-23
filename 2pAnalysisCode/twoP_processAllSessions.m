@@ -18,10 +18,10 @@ parfor i = iStart:size(exps,1)
     
     try
         %%
-        if ~exist('N','var') || N == 0
-        animal = 'Plex51'; session = '200401';
-        end
-        
+%         if ~exist('N','var') || N == 0
+%         animal = 'Plex51'; session = '200401';
+%         end
+%         
         [data,SessionData]=twoP_loadImgBhvData(animal,session, true, 10, false);
         
         D = twoP_combineStimAlignedData(data);
