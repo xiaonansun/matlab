@@ -18,8 +18,8 @@ parfor i = iStart:size(exps,1)
     
     try
         %%
-        if ~exist('N','var') || N == 0
-        animal = 'Plex51'; session = '200401';
+        if N == 0
+        animal = 'CSP27'; session = '20200329';
         end
         
         [data,SessionData]=twoP_loadImgBhvData(animal,session, true, 10, false);

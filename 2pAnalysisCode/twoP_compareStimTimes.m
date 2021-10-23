@@ -46,7 +46,7 @@ plot(shuf_d_trialStimTime,d_mscanStimTime,'.r',...
 plot(d_trialStimTime,d_mscanStimTime,'.k',...
     'MarkerSize',8); 
 xlabel('Bpod ISI (sec)'); ylabel('2P ISI (sec)');
-xlim([floor(min(d_trialStimTime)) 20]); ylim([floor(min(d_mscanStimTime)) 20]);
+xlim([0 20]); ylim([0 20]);
 legend({'unity','shuffled','shifted','unshuffled'},...
     'Location','North',...
     'Box','off');
@@ -54,6 +54,7 @@ ax = gca;
 fig_configAxis(ax);
 title(['Inter-stimulus interval across consecutive trials: ' D.animal ' ' D.session]);
 
+% Subpanel
 axes('Position',[0.85 0.2 .05 .4])
 hold on;
 marker_size = 2;
@@ -69,10 +70,11 @@ scatter(rand(1,length(dUnshuffled)),dUnshuffled,marker_size,...
 % yline(10e-5);
 % ylim([-0.1 20]); 
 ax = gca; fig_configAxis(ax); ylabel('Distance from unity');
-
 set(gca, 'YScale', 'log',...
     'Box','off',...
     'XTick',[],...
     'Color','none');
 ax.XAxis.Visible = 'off';
+% end subpanel
+
 exportgraphics(fISI,fullfile(D.suite2pDir,'inter_stimulus_interval.pdf'));

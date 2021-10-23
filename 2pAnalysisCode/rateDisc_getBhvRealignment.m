@@ -24,11 +24,11 @@ if ~exist('segFrames','var') || isempty(segFrames)
     segFrames = cumsum(floor(segIdx * sRate)); %max nr of frames per segment
 end
 
-if nargin == 0
+if nargin < 5
     disp('Missing animal and session ID imnput, data will not be saved.')
-elseif nargin == 1
+elseif nargin == 5
     disp('Missing session input, data will not be saved.')
-elseif nargin == 2
+elseif nargin == 6
     animal = varargin{1}; session = varargin{2};
 end
 

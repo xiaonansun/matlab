@@ -27,7 +27,7 @@ for i = 1:length(P)
     catCR{i} = vertcat(CR{:}); catCNR{i} = vertcat(CNR{:});
     catSR{i} = vertcat(SR{:}); catSNR{i} = vertcat(SNR{:});
     P{i} = vertcat(catCR{i},catCNR{i});
-    SP{i} = vertcat(catSR{i},catSNR{i});
+    SP{i} = vertcat(catSR{i},catSNR{i}); 
     y(i).R = squeeze(mean(catCR{i},1,'omitnan')); y(i).NR = squeeze(mean(catCNR{i},1,'omitnan'));
     y(i).SR = squeeze(mean(catSR{i},1,'omitnan')); y(i).SNR = squeeze(mean(catSNR{i},1,'omitnan'));
     y(i).P = squeeze(mean(P{i},1,'omitnan')); y(i).SP = squeeze(mean(SP{i},1,'omitnan'));
