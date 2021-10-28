@@ -1,5 +1,5 @@
 function bhv = twoP_bhvSubSelection(cBhv)
-
+%%
 bhv = cBhv; % Comment out this line when script is converted to function
 
 E = behavior_getStimEvents(bhv);
@@ -7,7 +7,8 @@ E = behavior_getStimEvents(bhv);
 [stimTime, stimEndTime, spoutTime, lickR, lickL, levGrabR, levGrabL, water]=behavior_findEventTiming(bhv); 
 
 
-idxSelfPerformed = ~bhv.SingleSpout & ~bhv.AutoReward;
+% idxSelfPerformed = ~bhv.SingleSpout & ~bhv.AutoReward;
+idxSelfPerformed = ~bhv.SingleSpout & ~bhv.AutoReward & ~bhv.DidNotChoose & ~bhv.DidNotLever & logical(bhv.Assisted) & bhv.StimType == 2; %only use active audio trials
 
 % Stimulus
 bhv.stim.AllRight = idxSelfPerformed & bhv.CorrectSide==2; 
@@ -32,7 +33,8 @@ bhv.error.Right = idxSelfPerformed & ~bhv.Rewarded & bhv.ResponseSide == 2;
 
 bhv.sub.AllIdx = [struct2cell(bhv.stim); struct2cell(bhv.response); struct2cell(bhv.rewarded); struct2cell(bhv.error)];
 bhv.sub.AllIdx = vertcat(bhv.sub.AllIdx{:});
-bhv.sub.names = [strcat('Stim',fieldnames(bhv.stim));...
-    strcat('Response',fieldnames(bhv.response));...
-    strcat('Rewarded',fieldnames(bhv.rewarded));...
-    strcat('Error',fieldnames(bhv.error))];
+
+bhv.sub.names.stim = strcat('Stim',fieldnames(bhv.stim));
+bhv.sub.names.response = strcat('Response',fieldnames(bhv.response));
+bhv.sub.names.rewarded = strcat('Rewarded',fieldnames(bhv.rewarded));
+bhv.sub.names.error = strcat('Error',fieldnames(bhv.error));

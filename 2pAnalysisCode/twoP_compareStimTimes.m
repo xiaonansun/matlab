@@ -3,6 +3,8 @@ function twoP_compareStimTimes(D,bhv)
 % This function computes the inter-stimulus interval between adjacent
 % trials and compares the timing between MScan analog timestamps versus Bpod
 % timestamps
+unityX = [0 20];
+unityY = [0 20];
 
 stimTimeStamp = nan(1,length(bhv.RawEvents.Trial));
 for i = 1:length(bhv.RawEvents.Trial)
@@ -21,8 +23,8 @@ mscanStimTime = nan(1,length(D.trialNumbers));
 mscanStimTime = D.stimSamplesOrig/1000;
 d_mscanStimTime = diff(mscanStimTime);
 
-v1 = [floor(min(d_trialStimTime)) floor(min(d_mscanStimTime))];
-v2 = [20 20];
+v1 = [unityX(1) unityY(1)];
+v2 = [unityX(2) unityY(2)];
 
 for i = 1:length(d_trialStimTime)
 ptUnshuffled = [d_trialStimTime(i) d_mscanStimTime(i)];
@@ -36,7 +38,7 @@ end
 %%
 fISI = figure(1);
 fISI.Position=[500 500 560 420];
-plot([floor(min(d_trialStimTime)) 20],[floor(min(d_mscanStimTime)) 20],...
+plot([unityX(1) unityX(2)],[unityY(1) unityY(2)],...
     'linewidth',4,...
     'Color',[0 0 0]+0.7); hold on; grid on;
 plot(shift_d_trialStimTime,d_mscanStimTime,'.b',...
@@ -48,7 +50,7 @@ plot(d_trialStimTime,d_mscanStimTime,'.k',...
 xlabel('Bpod ISI (sec)'); ylabel('2P ISI (sec)');
 xlim([0 20]); ylim([0 20]);
 legend({'unity','shuffled','shifted','unshuffled'},...
-    'Location','North',...
+    'Location','Northwest',...
     'Box','off');
 ax = gca;
 fig_configAxis(ax);
