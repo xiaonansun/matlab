@@ -1,4 +1,4 @@
-function twoP_processAllSessions(varargin)
+function twoP_batchComputeAUC(varargin)
 % This is a batch function that processes suite2p output (i.e. .npy
 % files) as well as the corresponding Bpod behavior data into trialized
 % format.
@@ -49,7 +49,8 @@ parfor i = iStart:size(exps,1)
     %% execute this cell to load one session. Just modify the animal and session variables as needed
     
     if ~exist('N','var') || N == 0
-        animal = 'CSP27'; session = '20200319'; % <---- modify this line to load one session
+        animal = 'Plex50'; session = '200322'; % <---- modify this line to load one session
+        procSingleSession = 1;
     else
         animal = colAnimal{i};
         session = colSession{i};
@@ -61,21 +62,42 @@ parfor i = iStart:size(exps,1)
         %         animal = 'CSP27'; session = '20200319';
         %         end
         
-        [data,SessionData]=twoP_loadImgBhvData(animal,session, true, 10, false);
+        S = twoP_settings;
+        imagingRootDir = S.dir.imagingRootDir;
+        imagingSubDir = S.dir.imagingSubDir;
         
-        D = twoP_combineStimAlignedData(data);
-        D = twoP_adjustData(D,SessionData);
+        sPerFrame = S.msPerFrame/1000;
         
-        cBhv = selectBehaviorTrials(SessionData, D.trialNumbers,animal, session); %% very important in matching trial indices
+        % Load event-aligned imaging data, behavior data, cell-type ID data
+        Vc = load(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'Vc.mat'),'Vc'); Vc = Vc.Vc;
+        cBhv = load(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'cBhv.mat'),'cBhv'); cBhv = cBhv.cBhv;
+        idxCell = readNPY(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'iscell.npy'));
+        idxRed = readNPY(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'redcell.npy'));
+        idxRed = logical(idxRed(logical(idxCell(:,1))));
         
-        Vc = rateDisc_getBhvRealignment(D.neural, cBhv, [], [], animal, session); % re-aligned imaging data to trial epoches
+        % Define the epoches
+        idxEpochInit = [S.segFrames(1) S.segFrames(2)];
+        idxEpochStim = [S.segFrames(2)+1 S.segFrames(3)];
+        idxEpochStimEarly = [S.segFrames(2)+1 floor(mean(idxEpochStim))];
+        idxEpochStimLate = [ceil(mean(idxEpochStim)) S.segFrames(3)];
+        idxEpochDelay = [S.segFrames(3)+1 S.segFrames(4)];
+        idxEpochResponse = [S.segFrames(4)+1 S.segFrames(5)];
+        idxEpochResponseEarly = [S.segFrames(4)+1 floor(mean(idxEpochResponse))];
+        idxEpochResponseLate = [ceil(mean(idxEpochResponse)) S.segFrames(5)];
+        idxEpochAll = [idxEpochInit; idxEpochStimEarly; idxEpochStimLate; idxEpochDelay; idxEpochResponseEarly; idxEpochResponseLate];
+
+        % compute trials binned by epochs
+        eVc = twoP_epochTrialMean(Vc,idxEpochAll);
         
-        twoP_compareStimTimes(D,cBhv);
+        % compute and save epoch-binned and unbinned AUC
+        [eAUC.all, eAUC.shuffle, eAUC.sAUC] = twoP_aucAnalysisNew(eVc, cBhv, 1, 1);
+        save(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'eAUC.mat'),'eAUC');
         
+        [AUC.all, AUC.shuffle, AUC.sAUC] = twoP_aucAnalysisNew(Vc, cBhv, 1, 1);
         
         
     end
-    if exist('N','var') || N > 0
+    if ~exist('procSingleSession','var') || procSingleSession == 0
         close all;
     end
 end

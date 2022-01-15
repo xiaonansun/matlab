@@ -28,6 +28,7 @@ end
 
 exps = twoP_getAcquisitionRecord;
 colAnimal = exps(:,1); 
+colDates = exps(:,2);
 colLocation = exps(:,3); 
 colDepth = exps(:,4);
 colDepthCat = twoP_getImagingDepth(colDepth);
@@ -57,6 +58,7 @@ idxExps = idxCellType & idxLocation & idxExpertise & idxDepth;
 
 allAnimal = cell(size(exps,1),1);
 allSession = cell(size(exps,1),1);
+allDates = cell(size(exps,1),1);
 allVc = cell(size(exps,1),1);
 allVcNan = cell(size(exps,1),1);
 allVcNormSD = cell(size(exps,1),1); % Inferred spiking activity normalized to units of standard deviation
@@ -73,6 +75,7 @@ parfor i = 1:length(idxExps)
         idxRed = readNPY(fullfile(imagingRootDir,colAnimal{i},'imaging',colSession{i},imagingSubDir,'redcell.npy'));
         idxRedCell{i} = idxRed(find(idxCell(:,1)));
         allAnimal{i} = colAnimal{i};
+        allDates{i} = colDates{i};
         allSession{i} = colSession{i};
         allVc{i} = Vc;
         allVcNan{i} = sum(isnan(Vc),3);
@@ -84,11 +87,12 @@ parfor i = 1:length(idxExps)
     end
 end
 
-combData = [allAnimal allSession allVc allVcNormSD allcBhv idxRedCell allVcNan];
-meta.colLabels = {'Animal','Session','Vc','Z-score','cBhv','idxRedCell','NaN Matrix'};
+combData = [allAnimal allSession allVc allVcNormSD allcBhv idxRedCell allVcNan allDates];
+meta.colLabels = {'Animal','Session','Vc','Z-score','cBhv','idxRedCell','NaN Matrix','Dates'};
 meta.cellType = cellType;
 meta.expertise = expertise;
 meta.location = location;
 meta.depth = depth;
+
 
 

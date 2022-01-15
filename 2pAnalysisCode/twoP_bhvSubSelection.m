@@ -11,10 +11,10 @@ E = behavior_getStimEvents(bhv);
 idxSelfPerformed = ~bhv.SingleSpout & ~bhv.AutoReward & ~bhv.DidNotChoose & ~bhv.DidNotLever & logical(bhv.Assisted) & bhv.StimType == 2; %only use active audio trials
 
 % Stimulus
-bhv.stim.AllRight = idxSelfPerformed & bhv.CorrectSide==2; 
 bhv.stim.AllLeft = idxSelfPerformed & bhv.CorrectSide==1;
-bhv.stim.EasyRight = idxSelfPerformed & E.ratioEvents' == 1;
+bhv.stim.AllRight = idxSelfPerformed & bhv.CorrectSide==2; 
 bhv.stim.EasyLeft = idxSelfPerformed & E.ratioEvents' == 0;
+bhv.stim.EasyRight = idxSelfPerformed & E.ratioEvents' == 1;
 
 % Choice
 bhv.response.All = idxSelfPerformed & bhv.ResponseSide > 0;
@@ -38,3 +38,9 @@ bhv.sub.names.stim = strcat('Stim',fieldnames(bhv.stim));
 bhv.sub.names.response = strcat('Response',fieldnames(bhv.response));
 bhv.sub.names.rewarded = strcat('Rewarded',fieldnames(bhv.rewarded));
 bhv.sub.names.error = strcat('Error',fieldnames(bhv.error));
+fn = fieldnames(bhv.sub.names);
+
+bhv.sub.AllNames = [];
+for i = 1:length(fn)
+bhv.sub.AllNames = [bhv.sub.AllNames;bhv.sub.names.(fn{i})];
+end
