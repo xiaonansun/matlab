@@ -34,22 +34,20 @@ S.sRate = S.opts.frameRate;
 S.segFrames = cumsum(floor(S.segIdx * S.sRate)); %max nr of frames per segment
 
 S.epoches(1).idx = [S.segFrames(1) S.segFrames(2)];
-S.epoches(1).name = 'Init';
-S.epoches(2).idx = [S.segFrames(2)+1 S.segFrames(3)];
-S.epoches(2).name = 'Stim';
-S.epoches(3).idx = [S.segFrames(2)+1 floor(mean(S.epoches(2).idx))];
-S.epoches(3).name = 'StimEarly';
-S.epoches(4).idx = [ceil(mean(S.epoches(2).idx)) S.segFrames(3)];
-S.epoches(4).name = 'StimLate';
-S.epoches(5).idx = [S.segFrames(3)+1 S.segFrames(4)];
-S.epoches(5).name = 'Delay';
-S.epoches(6).idx = [S.segFrames(4)+1 S.segFrames(5)];
-S.epoches(6).name = 'Response';
-S.epoches(7).idx = [S.segFrames(4)+1 floor(mean(S.epoches(6).idx))];
-S.epoches(7).name = 'ResponseEarly';
-S.epoches(8).idx = [ceil(mean(S.epoches(6).idx)) S.segFrames(5)];
-S.epoches(8).name = 'ResponseLate';
-S.allEpoches.idx = [S.epoches(1).idx; S.epoches(3).idx; S.epoches(4).idx;...
-    S.epoches(5).idx; S.epoches(7).idx; S.epoches(8).idx];
-S.allEpoches.name = {S.epoches(1).name; S.epoches(3).name; S.epoches(4).name;...
-    S.epoches(5).name; S.epoches(7).name; S.epoches(8).name};
+S.epoches(1.name = 'Init';
+S.epoches.stim.idx = [S.segFrames(2)+1 S.segFrames(3)];
+S.epoches.stim.name = 'Stim';
+S.epoches.stimearly.idx = [S.segFrames(2)+1 floor(mean(S.epoches.stim.idx))];
+S.epoches.stimearly.name = 'StimEarly';
+S.epoches.stimlate.idx = [ceil(mean(S.epoches.stim.idx)) S.segFrames(3)];
+S.epoches.stimlate.name = 'StimLate';
+S.epoches.delay.idx = [S.segFrames(3)+1 S.segFrames(4)];
+S.epoches.delay.name = 'Delay';
+S.epoches.response.idx = [S.segFrames(4)+1 S.segFrames(5)];
+S.epoches.response.name = 'Response';
+S.epoches.responseearly.idx = [S.segFrames(4)+1 floor(mean(S.epoches.response.idx))];
+S.epoches.responseearly.name = 'ResponseEarly';
+S.epoches.responselate.idx = [ceil(mean(S.epoches.response.idx)) S.segFrames(5)];
+S.epoches.responselate.name = 'ResponseLate';
+S.epoches.idxAll = [S.epoches.init.idx; S.epoches.stimearly.idx; S.epoches.stimlate.idx;...
+    S.epoches.delay.idx; S.epoches.responseearly.idx; S.epoches.responselate.idx];

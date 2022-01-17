@@ -94,7 +94,7 @@ plot(0.5-2*errorShuf','k');
 % end
 
 eVc = twoP_epochTrialMean(Vc,idxEpochAll);
-[auc.all, auc.shuffle, auc.sAUC] = twoP_aucAnalysisNew(eVc, cBhv, 1, 1);
+[auc.all, auc.shuffle, auc.sAUC] = twoP_aucAnalysisNew(eVc, cBhv, 1, 1, animal, session);
 
 %% 
 numBins = 30;

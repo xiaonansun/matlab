@@ -315,8 +315,8 @@ else
         imagingRootDir = S.dir.imagingRootDir;
         imagingSubDir = S.dir.imagingSubDir;
         saveDir= fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir);
-        save(fullfile(saveDir,['AUC_' num2str(size(AUC.allAUC,2)) '.mat']),'AUC');
-        disp(['AUC data saved as: ' fullfile(saveDir,['AUC_' num2str(size(AUC.allAUC,2)) '.mat'])]);
+        save(fullfile(saveDir,['AUC_' num2str(size(auc.allAUC,2)) '.mat']),'AUC');
+        disp(['AUC data saved as: ' fullfile(saveDir,['AUC_' num2str(size(auc.allAUC,2)) '.mat'])])
 end
 
 end
