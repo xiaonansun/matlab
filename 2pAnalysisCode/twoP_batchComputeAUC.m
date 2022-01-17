@@ -20,20 +20,22 @@ iStart = 2;
 parfor i = iStart:size(exps,1)
     %% execute this cell to load one session. Just modify the animal and session variables as needed
     
-    if ~exist('N','var') || N == 0
-        animal = 'Plex50'; session = '200322'; % <---- modify this line to load one session
-        procSingleSession = 1;
-    else
-        animal = colAnimal{i};
-        session = colSession{i};
-    end
+%     if ~exist('N','var') || N == 0
+%         animal = 'Plex50'; session = '200322'; % <---- modify this line to load one session
+%         procSingleSession = 1;
+%     else
+%         animal = colAnimal{i};
+%         session = colSession{i};
+%     end
     
     try
         
         %         if ~exist('N','var') || N == 0
         %         animal = 'CSP27'; session = '20200319';
         %         end
-
+        animal = colAnimal{i};
+        session = colSession{i};
+        
         S = twoP_settings;
         
         % Load event-aligned imaging data, behavior data, cell-type ID data
@@ -55,7 +57,7 @@ parfor i = iStart:size(exps,1)
         twoP_aucAnalysisNew(Vc, cBhv, 1, 1, animal, session);
         
     end
-    if ~exist('procSingleSession','var') || procSingleSession == 0
-        close all;
-    end
+%     if ~exist('procSingleSession','var') || procSingleSession == 0
+%         close all;
+%     end
 end
