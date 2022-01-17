@@ -1,4 +1,4 @@
-% function twoP_combineData
+function twoP_combineData
 
 % This function combines inferred spikes across sessions into a single
 % cell by performing the following:
