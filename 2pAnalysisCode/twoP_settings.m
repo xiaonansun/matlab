@@ -1,6 +1,34 @@
 function S = twoP_settings
 
 S = struct;
+S.cellTypes = {'CSP';'Plex';'Fez'};
+
+docid = '1ADcwZJygK7fV0zOq537V1Vsyv45-OF3WkMopNbjFifY';
+S.exps = GetGoogleSpreadsheet(docid);
+colAnimalID = contains(S.exps(1,:),'Animal');
+colLocation = contains(S.exps(1,:),'Location');
+
+% Generates a list of all animals
+Z = cellfun(@(x) contains(S.exps(:,colAnimalID),x),S.cellTypes,'UniformOutput',false);
+X = cellfun(@(x) S.exps(x,colAnimalID),Z,'UniformOutput',false);
+S.animalID = cellfun(@(x) unique(x), X, 'UniformOutput',false);
+
+locations = unique(S.exps(contains(S.exps(:,1),S.cellTypes(:)),colLocation));
+S.locations = locations(~cellfun(@isempty,locations));
+S.depth = cell(size(S.exps,1),1); S.depth(1) = {'DepthCategory'};
+
+S.depthCategory = {'Superficial','Intermediate','Deep'};
+temp = cellfun(@(x) double(str2num(x) > 450) ,S.exps(:,4),'UniformOutput',false);
+idxTemp = find(cellfun(@isempty,temp)); temp(idxTemp) = {[0]}; temp = cell2mat(temp); temp = logical(temp);
+S.depth(temp) = S.depthCategory(3);
+
+temp = cellfun(@(x) double(str2num(x) < 200) ,S.exps(:,4),'UniformOutput',false);
+idxTemp = find(cellfun(@isempty,temp)); temp(idxTemp) = {[0]}; temp = cell2mat(temp); temp = logical(temp);
+S.depth(temp) = S.depthCategory(1);
+
+temp = cellfun(@(x) double((str2num(x) > 200) & (str2num(x) < 450)) ,S.exps(:,4),'UniformOutput',false);
+idxTemp = find(cellfun(@isempty,temp)); temp(idxTemp) = {[0]}; temp = cell2mat(temp); temp = logical(temp);
+S.depth(temp) = S.depthCategory(2);
 
 if convertCharsToStrings(getenv('COMPUTERNAME')) == convertCharsToStrings('MANHASSET')
     S.dir.imagingRootDir = 'G:\2PData';
@@ -21,7 +49,6 @@ S.dir.imagingSubDir = fullfile('suite2p', 'plane0');
 S.dir.bhvSubDir = fullfile('SpatialDisc', 'Session Data');
 
 S.segIdx = [1 0.75 1.25 0.5 1];
-S.cellTypes = {'CSP';'Plex';'Fez'};
 S.expertise = {'Naive','Trained','Expert'};
 S.nShuffle = 20;
 S.msPerFrame = 32.3638;

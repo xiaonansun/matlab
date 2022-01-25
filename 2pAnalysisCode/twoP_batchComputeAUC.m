@@ -33,11 +33,11 @@ parfor i = iStart:size(exps,1)
         %         if ~exist('N','var') || N == 0
         %         animal = 'CSP27'; session = '20200319';
         %         end
+
+        S = twoP_settings;
         animal = colAnimal{i};
         session = colSession{i};
-        
-        S = twoP_settings;
-        
+
         % Load event-aligned imaging data, behavior data, cell-type ID data
         Vc = load(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'Vc.mat'),'Vc'); Vc = Vc.Vc;
         cBhv = load(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'cBhv.mat'),'cBhv'); cBhv = cBhv.cBhv;

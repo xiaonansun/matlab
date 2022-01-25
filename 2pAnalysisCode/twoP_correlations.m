@@ -40,11 +40,13 @@ responseR = squeeze(mean(Vc(:,idxEpochResponse(1):idxEpochResponse(2),bhv.respon
 eVc = twoP_epochTrialMean(Vc,idxEpochAll);
 
 %% Logistic regression
-cVc = eVc;
+% cVc = eVc;
+cVc = Vc;
+
 clear lr;
 useTrials = 250; regType = 'lasso'; stepSize = []; decType = 'allChoice';
 
-% All neurons
+% All neurons, to compute shuffle, multiple iterations will be needed
 [lr.cvAcc, lr.bMaps, lr.mdlAll, lr.trialCnt, lr.cvAccShuf, lr.bMapsShuf, lr.mdlAllShuf, lr.leftIdxShuf, lr.leftIdx] = rateDisc_logDecoder(cVc, [], cBhv, useTrials, 0, regType, stepSize, decType,[]);
 
 % Red neurons
@@ -53,7 +55,8 @@ useTrials = 250; regType = 'lasso'; stepSize = []; decType = 'allChoice';
 % Compute the predictive accuracy of the logistic regression model for
 % non-red cells matched to the number of red cells
 clear idxNRnew cvAccNR
-nRep = 50;
+nRep = 20;
+
 idxNR=find(~idxRed);
 % idxNRnew = zeros(sum(idxRed),nRep);
 idxAll = arrayfun(@(x) randperm(x,sum(idxRed)),ones(1,nRep)*length(idxNR),'UniformOutput',false);
@@ -64,6 +67,23 @@ parfor i = 1:nRep
 end
 lr.cvAccNR = cvAccNR; clear cvAccNR
 
+idxAll = arrayfun(@(x) randperm(x,sum(idxRed)),ones(1,nRep)*length(idxNR),'UniformOutput',false);
+idxNRnew = cell2mat(cellfun(@(x) idxNR(x),idxAll,'UniformOutput',false));
+cvAccMixedUR = zeros(nRep,size(cVc,2));
+parfor i = 1:nRep
+    [cvAccMixedUR(i,:), ~, ~, ~, ~, ~, ~, ~, ~] = rateDisc_logDecoder(cVc([idxNRnew(:,i);find(idxRed)],:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,[]);
+end
+lr.cvAccMixedUR = cvAccMixedUR; clear cvAccMixedUR
+
+idxUU = arrayfun(@(x) randperm(x,2*sum(idxRed)),ones(1,nRep)*length(idxNR),'UniformOutput',false);
+idxUUnew = cell2mat(cellfun(@(x) idxNR(x),idxUU,'UniformOutput',false));
+cvAccMixedUU = zeros(nRep,size(cVc,2));
+parfor i = 1:nRep
+    [cvAccMixedUU(i,:), ~, ~, ~, ~, ~, ~, ~, ~] = rateDisc_logDecoder(cVc(idxUUnew(:,i),:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,[]);
+end
+lr.cvAccMixedUU = cvAccMixedUU; clear cvAccMixedUU
+
+stdshade(amatrix,alpha,acolor,F,smth)
 
 %%
 eVc = twoP_epochTrialMean(Vc,idxEpochAll);
@@ -193,8 +213,3 @@ cdfplot(NN(:))
 [h,p] = kstest2(NN(:),RN(:))
 [h,p] = kstest2(RR(:),RN(:))
 legend({'Pos-Pos';'Pos-Neg';'Neg-Neg'})
-
-
-%%
-imagesc(R)
-imagesc(P)

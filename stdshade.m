@@ -7,9 +7,10 @@ function [lineOut, fillOut] = stdshade(amatrix,alpha,acolor,F,smth)
 % - F assignes the used x axis (default is steps of 1).
 % - smth defines the smoothing factor (default is no smooth)
 % smusall 2010/4/23
-if exist('acolor','var')==0 || isempty(acolor)
+if ~exist('acolor','var') || isempty(acolor)
     acolor='r'; 
 end
+
 if exist('F','var')==0 || isempty(F)
     F=1:size(amatrix,2);
 end
@@ -23,8 +24,8 @@ amean = nanmean(amatrix,1); %get man over first dimension
 if smth > 1
     amean = boxFilter(nanmean(amatrix,1),smth); %use boxfilter to smooth data
 end
-% astd = nanstd(amatrix,[],1); % to get std shading
-astd = nanstd(amatrix,[],1)/sqrt(size(amatrix,1)); % to get sem shading
+astd = nanstd(amatrix,[],1); % to get std shading
+% astd = nanstd(amatrix,[],1)/sqrt(size(amatrix,1)); % to get sem shading
 if ~exist('alpha','var') || isempty(alpha) 
     alpha = 0;
 end
@@ -39,7 +40,7 @@ for iSegs = 1 : length(segOn)
     cIdx = segOn(iSegs):segOff(iSegs);
     fillOut(iSegs) = fill([F(cIdx) fliplr(F(cIdx))],[amean(cIdx)+astd(cIdx) fliplr(amean(cIdx)-astd(cIdx))],acolor, 'FaceAlpha', alpha,'linestyle','none');
 end
-if ~exist('alpha','var') || isempty(alpha) 
+if ~exist('alpha','var') || isempty(alpha) p
     acolor = 'k';
 end
     
