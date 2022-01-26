@@ -109,6 +109,6 @@ disp(['All sessions combined in ' num2str(toc) ' seconds.']);
 % writetable(T,fullfile(S.dir.imagingRootDir,'analysis','trialNumberComparison.csv'));
 
 % save(fullfile(S.dir.imagingRootDir,'analysis','aligned_combined.mat'),'D','-nocompression','-v7.3');
-tic
+toc
 save(fullfile(S.dir.imagingRootDir,'analysis','all_psth.mat'),'Vsub','trialTypes','-nocompression','-v7.3');
 disp(['Data saved in ' num2str(toc) ' seconds.']);

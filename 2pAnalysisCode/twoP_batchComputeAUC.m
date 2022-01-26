@@ -35,6 +35,9 @@ parfor i = iStart:size(exps,1)
         %         end
 
         S = twoP_settings;
+        imagingRootDir = S.dir.imagingRootDir;
+        imagingSubDir = S.dir.imagingSubDir;
+
         animal = colAnimal{i};
         session = colSession{i};
 
