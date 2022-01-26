@@ -17,11 +17,11 @@ colSession = exps(:,6);
 
 iStart = 2;
 
-parfor i = iStart:size(exps,1)
+for i = iStart:size(exps,1)
     %% execute this cell to load one session. Just modify the animal and session variables as needed
     
     try
-
+        addpath(genpath(pwd));
         S = twoP_settings;
         imagingRootDir = S.dir.imagingRootDir;
         imagingSubDir = S.dir.imagingSubDir;
