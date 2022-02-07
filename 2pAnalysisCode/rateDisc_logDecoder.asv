@@ -42,12 +42,11 @@ else
     bMaps = NaN(size(U,1), dSize, 'single'); %beta maps for different decoders
     bMapsShuf = NaN(size(U,1), dSize, 'single'); %beta maps for different decoders
 end
-cvAcc = NaN(1, dSize, 'single'); cvAccShuf = NaN(shufReps, dSize, 'single');
+cvAcc = NaN(1, dSize, 'single'); cvAccShuf = NaN(1, dSize, 'single');
 trialCnt = NaN(1, dSize, 'single'); 
 % betaNeuron = NaN(1, dSize, 'single'); % Added by Richard 2021-07-06, for single-neuron beta weights
 mdlAll = cell(1,dSize); % Added by Richard 2021-07-06, for single-neuron models
-mdlAllShuf = cell(shufReps,dSize); % Added by Richard 2021-07-06, for single-neuron models
-leftIdxShuf = nan(shufReps,dSize); 
+mdlAllShuf = cell(1,dSize); % Added by Richard 2021-07-06, for single-neuron models
 
 %% get some indices, normalize data and check trialcount for each time point
 if targMod == 0
@@ -67,10 +66,6 @@ nLeftIdx = nLeftIdx(perfIdx); %future choices
 leftIdx = leftIdx(perfIdx); %current choices
 targIdx = bhv.CorrectSide(perfIdx) == 1; %trials were left was correct side
 corrIdx = bhv.Rewarded(perfIdx); %rewarded trials
-
-for i = 1:shufReps
-    leftIdxShuf(i,:) = leftIdx(randperm(length(leftIdx)));
-end
 
 %% run decoder
 rng(1) % for reproducibility
@@ -108,8 +103,8 @@ for iSteps = 1 : stepSize : dSize*stepSize
             cvAcc(Cnt) = 1-kfoldLoss(Mdl);
             mdlAll{Cnt} = Mdl; % added by Richard 2021-07-06
             
-            
             for j = 1:shufReps
+                leftIdxShuf(j,:) = leftIdx(randperm(length(leftIdx)));
                 choiceIdxShuf(j,:) = rateDisc_equalizeTrials(~isnan(cData(1,:)), leftIdxShuf(j,:), [], useTrials); %equalize L/R choices
                 if sum(choiceIdxShuf(j,:)) <= sum(choiceIdx)
                     XShuf = cData(:, choiceIdxShuf(j,:));
@@ -126,7 +121,7 @@ for iSteps = 1 : stepSize : dSize*stepSize
                 YShuf = double(leftIdxShuf(choiceIdxShuf(j,:))'); % Shuffled
                 MdlShuf = fitclinear(XShuf, YShuf, 'ObservationsIn','columns', 'kfold', 10, 'Regularization', regType, 'Learner', learnType);
                 cvAccShuf(j,Cnt) = 1-kfoldLoss(MdlShuf);
-%                 mdlAllShuf{Cnt} = MdlShuf; % added by Richard 2021-07-06
+                mdlAllShuf{j,Cnt} = MdlShuf; % added by Richard 2021-07-06
             end
             
             if ~isempty(U)
@@ -142,12 +137,17 @@ for iSteps = 1 : stepSize : dSize*stepSize
                 end
                 bMaps(useIdx, Cnt) = nanmean(a,2); % computes the mean beta across all (in this case, 10) cross-validation runs
                 
-                if shufReps > 0
-                    for x = 1:length(MdlShuf.Trained)
-                        aShuf(:,x) = bsxfun(@rdivide,MdlShuf.Trained{x}.Beta, XShufstd);
-                    end
-                    bMapsShuf(useIdx, Cnt) = nanmean(aShuf,2); % computes the mean beta across all (in this case, 10) cross-validation runs
+                for x = 1:length(MdlShuf.Trained)
+                    aShuf(:,x) = bsxfun(@rdivide,MdlShuf.Trained{x}.Beta, XShufstd);
                 end
+                bMapsShuf(useIdx, Cnt) = nanmean(aShuf,2); % computes the mean beta across all (in this case, 10) cross-validation runs
+                
+%                 allAUC(useIdx, Cnt) = colAUC(X',Y);
+%                 if shuffleAUC == 1
+%                     for iShuf = 1:nShuf
+%                         shufAUC(useIdx, Cnt, iShuf) = colAUC(X',Y(randperm(length(Y))));
+%                     end
+%                 end
             end
         end
         

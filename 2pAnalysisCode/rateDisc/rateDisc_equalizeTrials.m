@@ -2,7 +2,7 @@ function useIdx = rateDisc_equalizeTrials(useIdx, targIdx, sTargIdx, maxTrials, 
 % ensure that trials in 'useIdx' are equally distributed based on 'targIdx'
 % and 'sTargIdx'. If set, only select up to 'maxTrials'. set 'dualCase' to
 % also adjust trialcounts for 'sTargIdx' but allow their total count to be
-% different (e.g. when there are many more correct as incorrect trials).
+% different (e.g. when there are many more correct than incorrect trials).
 % For example, this will return a similar amount of correct and incorrect
 % left/right choices but the amount of correct and incorrect trials can
 % differ.

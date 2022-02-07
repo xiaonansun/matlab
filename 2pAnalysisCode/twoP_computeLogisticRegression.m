@@ -26,41 +26,45 @@ idxRed = logical(idxRed(logical(idxCell(:,1))));
 cVc = Vc;
 
 clear lr;
-useTrials = 250; regType = 'lasso'; stepSize = []; decType = 'allChoice';
+useTrials = 250; regType = 'lasso'; stepSize = []; decType = 'allChoice'; 
+learnType = 'logistic';
 
 % All neurons, to compute shuffle, multiple iterations will be needed
-[lr.cvAcc, lr.bMaps, lr.mdlAll, lr.trialCnt, lr.cvAccShuf, lr.bMapsShuf, lr.mdlAllShuf, lr.leftIdxShuf, lr.leftIdx] = rateDisc_logDecoder(cVc, [], cBhv, useTrials, 0, regType, stepSize, decType,[]);
+[lr.cvAcc, lr.bMaps, lr.mdlAll, lr.trialCnt, lr.cvAccShuf, lr.bMapsShuf, lr.mdlAllShuf, lr.leftIdxShuf, lr.leftIdx] = ...
+    rateDisc_logDecoder(cVc, [], cBhv, useTrials, 0, regType, stepSize, decType,learnType);
 
 % Red neurons
-[lr.cvAccRed, lr.bMapsRed, ~, ~, ~, ~, ~, ~, ~] = rateDisc_logDecoder(cVc(idxRed,:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,[]);
+[lr.cvAccRed, lr.bMapsRed, ~, ~, ~, ~, ~, ~, ~] = ...
+    rateDisc_logDecoder(cVc(idxRed,:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
 
 % Compute the predictive accuracy of the logistic regression model for
 % non-red cells matched to the number of red cells
-clear idxNRnew cvAccNR
 
-idxNR=find(~idxRed);
-% idxNRnew = zeros(sum(idxRed),nRep);
-idxAll = arrayfun(@(x) randperm(x,sum(idxRed)),ones(1,nRep)*length(idxNR),'UniformOutput',false);
-idxNRnew = cell2mat(cellfun(@(x) idxNR(x),idxAll,'UniformOutput',false));
-cvAccNR = zeros(nRep,size(cVc,2));
+idxU=find(~idxRed);
+idxAll = arrayfun(@(x) randperm(x,sum(idxRed)),ones(1,nRep)*length(idxU),'UniformOutput',false);
+idxUnew = cell2mat(cellfun(@(x) idxU(x),idxAll,'UniformOutput',false));
+cvAccU = zeros(nRep,size(cVc,2));
 parfor i = 1:nRep
-    [cvAccNR(i,:), ~, ~, ~, ~, ~, ~, ~, ~] = rateDisc_logDecoder(cVc(idxNRnew(:,i),:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,[]);
+    [cvAccU(i,:), ~, ~, ~, ~, ~, ~, ~, ~] = ...
+        rateDisc_logDecoder(cVc(idxUnew(:,i),:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
 end
-lr.cvAccNR = cvAccNR; clear cvAccNR
+lr.cvAccU = cvAccU; clear cvAccU
 
-idxAll = arrayfun(@(x) randperm(x,sum(idxRed)),ones(1,nRep)*length(idxNR),'UniformOutput',false);
-idxNRnew = cell2mat(cellfun(@(x) idxNR(x),idxAll,'UniformOutput',false));
+idxAll = arrayfun(@(x) randperm(x,sum(idxRed)),ones(1,nRep)*length(idxU),'UniformOutput',false);
+idxUnew = cell2mat(cellfun(@(x) idxU(x),idxAll,'UniformOutput',false));
 cvAccMixedUR = zeros(nRep,size(cVc,2));
 parfor i = 1:nRep
-    [cvAccMixedUR(i,:), ~, ~, ~, ~, ~, ~, ~, ~] = rateDisc_logDecoder(cVc([idxNRnew(:,i);find(idxRed)],:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,[]);
+    [cvAccMixedUR(i,:), ~, ~, ~, ~, ~, ~, ~, ~] = ...
+        rateDisc_logDecoder(cVc([idxUnew(:,i);find(idxRed)],:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
 end
 lr.cvAccMixedUR = cvAccMixedUR; clear cvAccMixedUR
 
-idxUU = arrayfun(@(x) randperm(x,2*sum(idxRed)),ones(1,nRep)*length(idxNR),'UniformOutput',false);
-idxUUnew = cell2mat(cellfun(@(x) idxNR(x),idxUU,'UniformOutput',false));
+idxUU = arrayfun(@(x) randperm(x,2*sum(idxRed)),ones(1,nRep)*length(idxU),'UniformOutput',false);
+idxUUnew = cell2mat(cellfun(@(x) idxU(x),idxUU,'UniformOutput',false));
 cvAccMixedUU = zeros(nRep,size(cVc,2));
 parfor i = 1:nRep
-    [cvAccMixedUU(i,:), ~, ~, ~, ~, ~, ~, ~, ~] = rateDisc_logDecoder(cVc(idxUUnew(:,i),:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,[]);
+    [cvAccMixedUU(i,:), ~, ~, ~, ~, ~, ~, ~, ~] = ...
+        rateDisc_logDecoder(cVc(idxUUnew(:,i),:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
 end
 lr.cvAccMixedUU = cvAccMixedUU; clear cvAccMixedUU
 

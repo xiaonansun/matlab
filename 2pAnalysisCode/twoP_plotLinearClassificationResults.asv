@@ -3,7 +3,7 @@ function twoP_plotAUC
 
 S = twoP_settings;
 colAnimalID = 1; colDate = 2; colLocation = 3; colDepth = 4; colExpertise = 5; colSession = 6;
-aucFileName = 'AUC_6.mat';
+aucFileName = 'LR_136.mat';
 
 filelist = dir(fullfile(S.dir.imagingRootDir,['**\' aucFileName]));
 folderList = {filelist.folder};
@@ -16,39 +16,129 @@ subExps = [S.exps(idxExps,1:6) S.depth(idxExps)];
 cAnimal = subExps(:,1); cDate = subExps(:,2); cLocation = subExps(:,3); cDepthNumber = subExps(:,4);
 cExpertise = subExps(:,5); cSession = subExps(:,6); cDepth = subExps(:,7);
 
-%% Load and combine AUC of select sessions
+%% Loads logistic regression analysis, takes the mean of an epoch, and combines multiple sessions into rows of a cell
+
 close all
 
-sAnimal = {'CSP27';'CSP30'};
-sExpertise = {'Expert'};
-sDepth = {'Intermediate'};
-sLocation = {'ALM'};
+sAnimal = {''};
+sExpertise = {''};
+sDepth = {''};
+sLocation = {''};
 
-sIdx = find(ismember(cAnimal,sAnimal) & ...
-    strcmp(cExpertise,sExpertise) & ...
-    strcmp(cDepth,sDepth) & ...
-    strcmp(cLocation,sLocation));
-sMeta = subExps(sIdx,:);
-allAUC = cell(length(sIdx),1);
-shufAUC = cell(length(sIdx),1);
-idxRed = cell(length(sIdx),1);
-
-parfor i = 1:length(sIdx)
-    ii=sIdx(i);
-    AUC = load(fullfile(filelist(ii).folder,filelist(ii).name));
-    AUC = AUC.AUC;
-    idxCell = readNPY(fullfile(filelist(ii).folder,'iscell.npy'));
-    idxRedTemp = readNPY(fullfile(filelist(ii).folder,'redcell.npy'));
-    idxRedTemp = logical(idxRedTemp(logical(idxCell(:,1))));
-    allAUC{i} = AUC.allAUC;
-    shufAUC{i} = AUC.shufAUC;
-    idxRed{i} = idxRedTemp;
+if ismissing(sAnimal)
+    sAnimal = unique(cAnimal);
 end
 
-allAUC = cell2mat(allAUC); 
-shufAUC = cell2mat(shufAUC);
-idxRed = cell2mat(idxRed);
-idxCellTypes = twoP_indexMatrix(idxRed);
+if ismissing(sExpertise)
+    sExpertise = unique(cExpertise);
+end
+
+if ismissing(sDepth)
+    sDepth = unique(cDepth);
+end
+
+if ismissing(sLocation)
+    sLocation = unique(cLocation);
+end
+
+
+sIdx = find(contains(cAnimal,sAnimal) & ...
+    contains(cExpertise,sExpertise) & ...
+    contains(cDepth,sDepth) & ...
+    contains(cLocation,sLocation));
+
+% This defines which epoch is averaged
+eIdx = [S.segFrames(3) S.segFrames(4)-1];
+
+A = cell(length(sIdx),1);
+betaR = cell(length(sIdx),1);
+betaU = cell(length(sIdx),1);
+shufA = cell(length(sIdx),1);
+R = cell(length(sIdx),1);
+U = cell(length(sIdx),1);
+UR = cell(length(sIdx),1);
+UU = cell(length(sIdx),1);
+
+sMeta = subExps(sIdx,:);
+
+folderList = {filelist.folder};
+filenameList = {filelist.name};
+parfor i = 1:length(sIdx)
+    try
+    ii=sIdx(i);
+    lr = load(fullfile(folderList{ii},filenameList{ii}),'lr'); lr = lr.lr;
+    twoP_plotSingleSessionLinearClassification(sMeta(i,:),lr)
+    idxCell = readNPY(fullfile(filelist(ii).folder,'iscell.npy'));
+    idxRedTemp = readNPY(fullfile(filelist(ii).folder,'redcell.npy'));
+    idxRed{i} = logical(idxRedTemp(logical(idxCell(:,1))));
+    A{i} = mean(lr.cvAcc(eIdx(1):eIdx(2)),2,'omitnan');
+    betaR{i} = mean(lr.bMaps(idxRed{i},eIdx(1):eIdx(2)),2,'omitnan');
+    betaU{i} = mean(lr.bMaps(~idxRed{i},eIdx(1):eIdx(2)),2,'omitnan');
+    shufA{i} = mean(lr.cvAccShuf(eIdx(1):eIdx(2)),2,'omitdbquitnan');
+    R{i} = mean(lr.cvAccRed(eIdx(1):eIdx(2)),2,'omitnan');
+    U{i} = mean(lr.cvAccNR(:,eIdx(1):eIdx(2)),2,'omitnan');
+    UR{i} = mean(lr.cvAccMixedUR(:,eIdx(1):eIdx(2)),2,'omitnan');
+    UU{i} = mean(lr.cvAccMixedUU(:,eIdx(1):eIdx(2)),2,'omitnan');
+    disp(['Loaded ' fullfile(filelist(ii).folder,filelist(ii).name)]);
+    end
+end
+
+idxRedAll = vertcat(idxRed{:});
+idxCellTypes = twoP_indexMatrix(vertcat(idxRed{:}));
+
+
+%%
+time_vec = 1:length(lr.cvAcc);
+hFig = figure; hold on;
+boundedline(time_vec,mean(lr.cvAccNR),std(lr.cvAccNR,0,1,'omitnan')./sqrt(size(lr.cvAccNR,1)),'g','nan','gap',...
+    'transparency',0.1);
+boundedline(time_vec,mean(lr.cvAccMixedUR),std(lr.cvAccMixedUR,0,1,'omitnan')./sqrt(size(lr.cvAccMixedUR,1)),'m','nan','gap',...
+    'transparency',0.1);
+boundedline(time_vec,mean(lr.cvAccMixedUU),std(lr.cvAccMixedUU,0,1,'omitnan')./sqrt(size(lr.cvAccMixedUU,1)),'b','nan','gap',...
+    'transparency',0.1)
+line(time_vec,lr.cvAcc,'color','k');
+line(time_vec,lr.cvAccShuf,'color',[0.5 0.5 0.5]);
+line(time_vec,lr.cvAccRed,'color','r');
+% str_title_label = strjoin(string(horzcat(sMeta(i,1),sMeta(i,6),sMeta(i,3),sMeta(i,5),sMeta(i,end))));
+title(str_title_label)
+% ytickformat(gca, '%g%%');
+ax = gca;
+set(ax,'ytick',0.3:0.1:1);
+offsetAxes(gca);
+fig_configAxis(gca);
+% exportgraphics(hF,fullfile(S.dir.imagingRootDir,'LogisticRegression',['AllSessionsLogisticRegression_' sAnimal{:} '.pdf']));
+
+%%
+xval = 1:size(sIdx,1);
+x_labels = horzcat(sMeta(:,1),sMeta(:,6),sMeta(:,3),sMeta(:,5),sMeta(:,end));
+str_x_labels = string(x_labels);
+for i = 1:size(str_x_labels,1)
+    x_tick_labels(i) = strjoin(str_x_labels(i,:));
+end
+
+hF = figure('position',[500 500 1500 500]); hold on;
+h = ploterr(xval,cell2mat(A),[],[],'sk');
+hShuf = ploterr(xval,cell2mat(shufA),[],[]);
+set(hShuf,'marker','s',...
+    'linestyle','none',...
+    'markeredgecolor',[0.5 0.5 0.5]);
+hR = ploterr(xval,cell2mat(R),[],[],'*r');
+hU = ploterr(xval,cellfun(@mean,U),[],cellfun(@std,U),'og');
+hUR = ploterr(xval,cellfun(@mean,UR),[],cellfun(@std,UR),'*m');
+hUU = ploterr(xval,cellfun(@mean,UU),[],cellfun(@std,UU),'ob');
+xticks(xval);
+xticklabels(x_tick_labels)
+l = legend('All Cells','All Cells - Shuffled',...
+    'tdT+','','tdT- subsampled', '',...
+    'Mixed','','Mixed subsampled');
+set(l,'location','northwest',...
+    'box','off');
+ylabel('Classifier accuracy (%)');
+title(['Classifier accuracy during delay epoch across sessions - ' sAnimal{:}])
+% set(hUR,'marker',)
+offsetAxes(gca);
+fig_configAxis(gca);
+exportgraphics(hF,fullfile(S.dir.imagingRootDir,'LogisticRegression',['AllSessionsLogisticRegression_' sAnimal{:} '.pdf']));
 
 %% Find AUCs that are significantly different from the mean
 

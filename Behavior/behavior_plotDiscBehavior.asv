@@ -23,7 +23,7 @@ cDate = floor(cDate);
 pathList=pathList(ind,:);
 %%
 bhv = []; Cnt = 0;
-% hF = figure;cl
+% hF = figure;
 for iFiles = 1:length(pathList)
    %%
     try

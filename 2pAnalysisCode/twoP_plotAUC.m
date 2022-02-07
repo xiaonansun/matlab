@@ -4,6 +4,7 @@ function twoP_plotAUC
 S = twoP_settings;
 colAnimalID = 1; colDate = 2; colLocation = 3; colDepth = 4; colExpertise = 5; colSession = 6;
 aucFileName = 'AUC_6.mat';
+
 filelist = dir(fullfile(S.dir.imagingRootDir,['**\' aucFileName]));
 folderList = {filelist.folder};
 

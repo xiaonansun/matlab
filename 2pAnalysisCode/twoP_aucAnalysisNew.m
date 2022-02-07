@@ -123,26 +123,6 @@ for iSteps = 1 : stepSize : dSize*stepSize
                 end
             end
             
-            % get cross-validated model to compute predictive power
-%             Mdl = fitclinear(X, Y, 'ObservationsIn','columns', 'kfold', 10, 'Regularization', regType, 'Learner', learnType);
-%             cvAcc(iSteps) = 1-kfoldLoss(Mdl);
-%             mdlAll{iSteps} = Mdl; % added by Richard 2021-07-06
-%             if ~isempty(U)
-%                 clear a
-%                 for x = 1:length(Mdl.Trained)
-%                     a(:,x) = U * bsxfun(@rdivide,Mdl.Trained{x}.Beta, Xstd);
-%                 end
-%                 bMaps(:, iSteps) = nanmean(a,2);
-%             else
-%                 clear a
-%                 for x = 1:length(Mdl.Trained)
-%                     a(:,x) = bsxfun(@rdivide,Mdl.Trained{x}.Beta, Xstd);
-%                 end
-%                 bMaps(useIdx, iSteps) = nanmean(a,2);
-% 
-%             end
-%         end
-        
     elseif strcmpi(decType, 'allStim')
         % all trials - stim decoder
         stimIdx = rateDisc_equalizeTrials(~isnan(cData(1,:)), targIdx, [], useTrials); %equalize L/R choices and correct/incorrect trials

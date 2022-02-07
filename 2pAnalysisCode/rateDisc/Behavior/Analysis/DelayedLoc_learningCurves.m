@@ -86,7 +86,7 @@ for iFiles = 1:size(Files,1)
             
         for iMod = 1:3
             %% get some single session performance data
-            ind = ~SessionData.DidNotChoose & ~SessionData.DidNotLever & logical(SessionData.Assisted) & SessionData.StimType == modId(iMod); %only use active trials
+            ind = ~SessionData.DidNotChoose & taertaert~SessionData.DidNotLever & logical(SessionData.Assisted) & SessionData.StimType == modId(iMod); %only use active trials
             Performance.SelfPerformed(iMod,Cnt) = sum(SessionData.Rewarded(ind))/sum(SessionData.Rewarded(ind)+SessionData.Punished(ind)); %peformance for self-performed trials
             
             dInd = logical(SessionData.Assisted & SessionData.DistStim == 0); %index for trials that were detection only
