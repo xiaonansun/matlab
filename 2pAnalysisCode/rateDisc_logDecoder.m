@@ -47,7 +47,7 @@ trialCnt = NaN(1, dSize, 'single');
 % betaNeuron = NaN(1, dSize, 'single'); % Added by Richard 2021-07-06, for single-neuron beta weights
 mdlAll = cell(1,dSize); % Added by Richard 2021-07-06, for single-neuron models
 mdlAllShuf = cell(shufReps,dSize); % Added by Richard 2021-07-06, for single-neuron models
-leftIdxShuf = nan(shufReps,dSize); 
+% leftIdxShuf = nan(shufReps,dSize); 
 
 %% get some indices, normalize data and check trialcount for each time point
 if targMod == 0
