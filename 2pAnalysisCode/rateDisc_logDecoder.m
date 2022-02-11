@@ -1,4 +1,4 @@
-function [cvAcc, bMaps, mdlAll, trialCnt, cvAccShuf, bMapsShuf, mdlAllShuf, leftIdxShuf, leftIdx] = rateDisc_logDecoder(dataIn, U, bhv, useTrials, targMod, regType, stepSize, decType, learnType, shufReps)
+function [cvAcc, bMaps, mdlAll, trialCnt, cvAccShuf, bMapsShuf] = rateDisc_logDecoder(dataIn, U, bhv, useTrials, targMod, regType, stepSize, decType, learnType, shufReps)
 % 2021-06-23 added trialNumbers
 % run logistic regression decoder on widefield data.
 % cvAcc and bMaps have 5 decoder outputs each: 1 = all trials choice, 2 =
@@ -126,6 +126,7 @@ for iSteps = 1 : stepSize : dSize*stepSize
                 YShuf = double(leftIdxShuf(choiceIdxShuf(j,:))'); % Shuffled
                 MdlShuf = fitclinear(XShuf, YShuf, 'ObservationsIn','columns', 'kfold', 10, 'Regularization', regType, 'Learner', learnType);
                 cvAccShuf(j,Cnt) = 1-kfoldLoss(MdlShuf);
+%                 disp(['Shuffling trials, iteration #' num2str(j)]);
 %                 mdlAllShuf{Cnt} = MdlShuf; % added by Richard 2021-07-06
             end
             
