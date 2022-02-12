@@ -1,4 +1,4 @@
-function [cvAcc, bMaps, mdlAll, trialCnt, cvAccShuf, bMapsShuf] = rateDisc_logDecoder(dataIn, U, bhv, useTrials, targMod, regType, stepSize, decType, learnType, shufReps)
+function [cvAcc, bMaps, mdlAll, trialCnt, cvAccShuf] = rateDisc_logDecoder(dataIn, U, bhv, useTrials, targMod, regType, stepSize, decType, learnType, shufReps)
 % 2021-06-23 added trialNumbers
 % run logistic regression decoder on widefield data.
 % cvAcc and bMaps have 5 decoder outputs each: 1 = all trials choice, 2 =
@@ -109,10 +109,10 @@ for iSteps = 1 : stepSize : dSize*stepSize
             mdlAll{Cnt} = Mdl; % added by Richard 2021-07-06
             
             
-            for j = 1:shufReps
-                choiceIdxShuf(j,:) = rateDisc_equalizeTrials(~isnan(cData(1,:)), leftIdxShuf(j,:), [], useTrials); %equalize L/R choices
-                if sum(choiceIdxShuf(j,:)) <= sum(choiceIdx)
-                    XShuf = cData(:, choiceIdxShuf(j,:));
+            parfor j = 1:shufReps
+                choiceIdxShuf = rateDisc_equalizeTrials(~isnan(cData(1,:)), leftIdxShuf(j,:), [], useTrials); %equalize L/R choices
+                if sum(choiceIdxShuf) <= sum(choiceIdx)
+                    XShuf = cData(:, choiceIdxShuf);
                     XShufmean = mean(XShuf,2);
                     XShuf = bsxfun(@minus,XShuf,XShufmean);
                     XShufstd = std(XShuf,0,2);
@@ -123,7 +123,7 @@ for iSteps = 1 : stepSize : dSize*stepSize
                 else
                     XShuf = X;
                 end
-                YShuf = double(leftIdxShuf(choiceIdxShuf(j,:))'); % Shuffled
+                YShuf = double(leftIdxShuf(choiceIdxShuf)'); % Shuffled
                 MdlShuf = fitclinear(XShuf, YShuf, 'ObservationsIn','columns', 'kfold', 10, 'Regularization', regType, 'Learner', learnType);
                 cvAccShuf(j,Cnt) = 1-kfoldLoss(MdlShuf);
 %                 disp(['Shuffling trials, iteration #' num2str(j)]);
@@ -143,12 +143,12 @@ for iSteps = 1 : stepSize : dSize*stepSize
                 end
                 bMaps(useIdx, Cnt) = nanmean(a,2); % computes the mean beta across all (in this case, 10) cross-validation runs
                 
-                if shufReps > 0
-                    for x = 1:length(MdlShuf.Trained)
-                        aShuf(:,x) = bsxfun(@rdivide,MdlShuf.Trained{x}.Beta, XShufstd);
-                    end
-                    bMapsShuf(useIdx, Cnt) = nanmean(aShuf,2); % computes the mean beta across all (in this case, 10) cross-validation runs
-                end
+%                 if shufReps > 0
+%                     for x = 1:length(MdlShuf.Trained)
+%                         aShuf(:,x) = bsxfun(@rdivide,MdlShuf.Trained{x}.Beta, XShufstd);
+%                     end
+%                     bMapsShuf(useIdx, Cnt) = nanmean(aShuf,2); % computes the mean beta across all (in this case, 10) cross-validation runs
+%                 end
             end
         end
         

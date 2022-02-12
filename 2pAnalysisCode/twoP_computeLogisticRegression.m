@@ -2,6 +2,7 @@ function twoP_computeLogisticRegression(animal,session,num_reps)
 %% 
 % animal = 'Plex50'; session = '200330a';
 
+addpath(genpath(pwd));
 
 if ~exist('num_reps','var') || isempty(num_reps)
     num_reps = 20;
@@ -12,7 +13,6 @@ nRep = num_reps;
 S = twoP_settings;
 imagingRootDir = S.dir.imagingRootDir;
 imagingSubDir = S.dir.imagingSubDir;
-
 
 % Load event-aligned imaging data, behavior data, cell-type ID data
 Vc = load(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'Vc.mat'),'Vc'); Vc = Vc.Vc;
@@ -31,8 +31,8 @@ learnType = 'logistic';
 
 % All neurons, to compute shuffle, multiple iterations will be needed
 tic
-[lr.cvAcc, lr.bMaps, lr.mdlAll, lr.trialCnt, lr.cvAccShuf, lr.bMapsShuf] = ...
-    rateDisc_logDecoder(cVc, [], cBhv, useTrials, 0, regType, stepSize, decType,learnType);
+[lr.cvAcc, lr.bMaps, lr.mdlAll, lr.trialCnt, lr.cvAccShuf] = ...
+    rateDisc_logDecoder(cVc, [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,20);
 disp(['Logistic regression completed for all neurons: ' animal ' ' session ' in ' num2str(toc) ' seconds.']);
 
 % Red neurons
