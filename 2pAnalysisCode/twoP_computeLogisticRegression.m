@@ -65,7 +65,7 @@ parfor i = 1:nRep
         rateDisc_logDecoder(cVc([idxUnew(:,i);find(idxRed)],:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
 end
 lr.cvAccMixedUR = cvAccMixedUR; clear cvAccMixedUR
-disp(['Logistic regression completed for mixed (shuffled) neurons: ' animal ' ' session]);
+disp(['Logistic regression completed for mixed (shuffled) neurons: ' animal ' ' session  ' in ' num2str(toc) ' seconds.']);
 
 tic
 idxUU = arrayfun(@(x) randperm(x,2*sum(idxRed)),ones(1,nRep)*length(idxU),'UniformOutput',false);
