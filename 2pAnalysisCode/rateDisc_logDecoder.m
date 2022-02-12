@@ -108,28 +108,28 @@ for iSteps = 1 : stepSize : dSize*stepSize
             cvAcc(Cnt) = 1-kfoldLoss(Mdl);
             mdlAll{Cnt} = Mdl; % added by Richard 2021-07-06
             
-            
-            parfor j = 1:shufReps
-                choiceIdxShuf = rateDisc_equalizeTrials(~isnan(cData(1,:)), leftIdxShuf(j,:), [], useTrials); %equalize L/R choices
-                if sum(choiceIdxShuf) <= sum(choiceIdx)
-                    XShuf = cData(:, choiceIdxShuf);
-                    XShufmean = mean(XShuf,2);
-                    XShuf = bsxfun(@minus,XShuf,XShufmean);
-                    XShufstd = std(XShuf,0,2);
-                    useIdx = XShufstd>0;
-                    XShuf = XShuf(useIdx,:);
-                    XShufstd = XShufstd(useIdx);
-                    XShuf = bsxfun(@rdivide,XShuf,XShufstd);
-                else
-                    XShuf = X;
+            if shufReps > 0
+                parfor j = 1:shufReps
+                    choiceIdxShuf = rateDisc_equalizeTrials(~isnan(cData(1,:)), leftIdxShuf(j,:), [], useTrials); %equalize L/R choices
+                    if sum(choiceIdxShuf) <= sum(choiceIdx)
+                        XShuf = cData(:, choiceIdxShuf);
+                        XShufmean = mean(XShuf,2);
+                        XShuf = bsxfun(@minus,XShuf,XShufmean);
+                        XShufstd = std(XShuf,0,2);
+                        useIdx = XShufstd>0;
+                        XShuf = XShuf(useIdx,:);
+                        XShufstd = XShufstd(useIdx);
+                        XShuf = bsxfun(@rdivide,XShuf,XShufstd);
+                    else
+                        XShuf = X;
+                    end
+                    YShuf = double(leftIdxShuf(choiceIdxShuf)'); % Shuffled
+                    MdlShuf = fitclinear(XShuf, YShuf, 'ObservationsIn','columns', 'kfold', 10, 'Regularization', regType, 'Learner', learnType);
+                    cvAccShuf(j,Cnt) = 1-kfoldLoss(MdlShuf);
+                    %                 disp(['Shuffling trials, iteration #' num2str(j)]);
+                    %                 mdlAllShuf{Cnt} = MdlShuf; % added by Richard 2021-07-06
                 end
-                YShuf = double(leftIdxShuf(choiceIdxShuf)'); % Shuffled
-                MdlShuf = fitclinear(XShuf, YShuf, 'ObservationsIn','columns', 'kfold', 10, 'Regularization', regType, 'Learner', learnType);
-                cvAccShuf(j,Cnt) = 1-kfoldLoss(MdlShuf);
-%                 disp(['Shuffling trials, iteration #' num2str(j)]);
-%                 mdlAllShuf{Cnt} = MdlShuf; % added by Richard 2021-07-06
             end
-            
             if ~isempty(U)
                 clear a
                 for x = 1:length(Mdl.Trained) % cycles through individual cross-validation trainings

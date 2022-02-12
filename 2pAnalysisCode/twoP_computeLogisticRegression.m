@@ -37,7 +37,7 @@ disp(['Logistic regression completed for all neurons: ' animal ' ' session ' in 
 
 % Red neurons
 tic
-[lr.cvAccRed, lr.bMapsRed, ~, ~, ~, ~] = ...
+[lr.cvAccRed, lr.bMapsRed, ~, ~, ~] = ...
     rateDisc_logDecoder(cVc(idxRed,:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
 disp(['Logistic regression completed for tdT+ neurons: ' animal ' ' session ' in ' num2str(toc) ' seconds.']);
 
@@ -50,7 +50,7 @@ idxAll = arrayfun(@(x) randperm(x,sum(idxRed)),ones(1,nRep)*length(idxU),'Unifor
 idxUnew = cell2mat(cellfun(@(x) idxU(x),idxAll,'UniformOutput',false));
 cvAccU = zeros(nRep,size(cVc,2));
 parfor i = 1:nRep
-    [cvAccU(i,:), ~, ~, ~, ~, ~] = ...
+    [cvAccU(i,:), ~, ~, ~, ~] = ...
         rateDisc_logDecoder(cVc(idxUnew(:,i),:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
 end
 lr.cvAccU = cvAccU; clear cvAccU
@@ -61,7 +61,7 @@ idxAll = arrayfun(@(x) randperm(x,sum(idxRed)),ones(1,nRep)*length(idxU),'Unifor
 idxUnew = cell2mat(cellfun(@(x) idxU(x),idxAll,'UniformOutput',false));
 cvAccMixedUR = zeros(nRep,size(cVc,2));
 parfor i = 1:nRep
-    [cvAccMixedUR(i,:), ~, ~, ~, ~, ~] = ...
+    [cvAccMixedUR(i,:), ~, ~, ~, ~] = ...
         rateDisc_logDecoder(cVc([idxUnew(:,i);find(idxRed)],:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
 end
 lr.cvAccMixedUR = cvAccMixedUR; clear cvAccMixedUR
@@ -72,7 +72,7 @@ idxUU = arrayfun(@(x) randperm(x,2*sum(idxRed)),ones(1,nRep)*length(idxU),'Unifo
 idxUUnew = cell2mat(cellfun(@(x) idxU(x),idxUU,'UniformOutput',false));
 cvAccMixedUU = zeros(nRep,size(cVc,2));
 parfor i = 1:nRep
-    [cvAccMixedUU(i,:), ~, ~, ~, ~, ~] = ...
+    [cvAccMixedUU(i,:), ~, ~, ~, ~] = ...
         rateDisc_logDecoder(cVc(idxUUnew(:,i),:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
 end
 lr.cvAccMixedUU = cvAccMixedUU; clear cvAccMixedUU
