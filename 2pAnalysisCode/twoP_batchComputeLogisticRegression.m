@@ -17,7 +17,7 @@ colSession = exps(:,6);
 
 iStart = 2;
 
-for i = iStart:size(exps,1)
+parfor i = iStart:size(exps,1)
     %% execute this cell to load one session. Just modify the animal and session variables as needed
     
     try
