@@ -80,6 +80,7 @@ for i = 1:length(side)
         b = bar(side{i}./sum(idxCellTypes),'EdgeColor','none');
         title(tile_title{i});
         y_lim_max(i) = max(get(gca,'ylim'));
+        ax{i}.XTick = 1:size(side{i},1);
         xticklabels(x_tick_text);
         hL = legend(legend_text,...
             'Location','northwest',...
@@ -87,10 +88,10 @@ for i = 1:length(side)
         if i == 1
             ylabel('Fraction of cells (%)');
         end
+        fig_configAxis(gca);
 end
 linkaxes([ax{:}],'y');
 ylim([0 max(y_lim_max)]);
-fig_configAxis(gca);
 title(hTilesBars,[cell2mat(sAnimal') ' ' sExpertise{:} ' ' sLocation{:} ' ' sDepth{:} ' depth']);
 exportgraphics(hFigBars,fullfile(S.dir.imagingRootDir,'AUC',[cell2mat(sAnimal') '_' sExpertise{:} '_' sLocation{:} '_' sDepth{:} '_AUC_fractions_bars.pdf']));
 
@@ -98,6 +99,15 @@ exportgraphics(hFigBars,fullfile(S.dir.imagingRootDir,'AUC',[cell2mat(sAnimal') 
 %% Plot histograms of combined/concatenated AUC data
 
 [hFigure, hTiles] = twoP_histEpoches(sigAUC,idxCellTypes,20);
+epoche_xlabel_text = {'Init','EarlyStim','LateStim','Delay','EarlyResp','LateResp'};
+
+cnt = 1;
+for i = 1:length(hFigure.Children.Children)
+    if strcmp(hFigure.Children.Children(i).Type,'axes')
+        hFigure.Children.Children(i).XLabel.String = epoche_xlabel_text{end-cnt+1};
+        cnt = cnt+1;
+    end
+end
 title(hTiles,[cell2mat(sAnimal') ' ' sExpertise{:} ' ' sLocation{:} ' ' sDepth{:} ' depth']);
 exportgraphics(hFigure,fullfile(S.dir.imagingRootDir,'AUC',[cell2mat(sAnimal') '_' sExpertise{:} '_' sLocation{:} '_' sDepth{:} '_AUC_combined.pdf']));
 
@@ -171,7 +181,9 @@ for i = 1:length(idxAnimal)
         fig_configAxis(gca);
     end
     title(hTiles,[animal ' ' session ' ' location ' ' depth '\mum']);
-    exportgraphics(hFigure,fullfile(S.dir.imagingRootDir,'AUC',[animal '_' session '_AUC.pdf']));
+    figureSavePath = fullfile(S.dir.imagingRootDir,'AUC',[animal '_' session '_AUC.pdf']);
+    exportgraphics(hFigure,figureSavePath);
+    disp(['Figure saved to: ' figureSavePath]);
 end
 
 %% Plot the ratio of ipsi/contra AUC neuron counts

@@ -90,5 +90,6 @@ end
 title(tileAllTrialTypes,[animal ' ' session ' ' location ' ' depth '\mum']);
 xlabel(tileAllTrialTypes,'Time (s)');
 ylabel(tileAllTrialTypes,{'Inferred spikes'});
-
-exportgraphics(figAllTrialTypes,fullfile(S.dir.imagingRootDir,'PETH',[animal '_' session '_IS.pdf']));
+figureSavePath = fullfile(S.dir.imagingRootDir,'PETH',[animal '_' session '_IS.pdf']);
+exportgraphics(figAllTrialTypes,figureSavePath);
+disp(['Figure saved as: ' figureSavePath]);

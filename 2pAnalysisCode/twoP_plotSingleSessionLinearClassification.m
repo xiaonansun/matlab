@@ -1,4 +1,13 @@
-function twoP_plotSingleSessionLinearClassification(meta,lr)
+function twoP_plotSingleSessionLinearClassification(lr,meta)
+% This function plots the single-session, momentary, event-aligned
+% choice-prediction accuracy computed through logistic regression
+% lr (required): struct with logistic regression data
+% meta (optional): metadata, an optional variable. The characters/strings are
+% concatenated to form the title of the figure and the file name
+
+if ~exist('meta','var') || isempty(meta)
+    meta = {'Untitled'};
+end
 
 %%
 S = twoP_settings;
@@ -20,7 +29,7 @@ zero_vec(isnan(lr.cvAcc))=nan;
 line_label = {'tdT- (subsamp)','Mixed','tdT- (2X subsamp)','All','Shuf','tdT+'};
 line_color = [0 1 0; 1 0 1; 0 0 1; 0 0 0; 0.5 0.5 0.5; 1 0 0];
 
-hLine(1) = boundedline(time_vec,mean(lr.cvAccNR),std(lr.cvAccNR,0,1,'omitnan')./sqrt(size(lr.cvAccNR,1)),...
+hLine(1) = boundedline(time_vec,mean(lr.cvAccU),std(lr.cvAccU,0,1,'omitnan')./sqrt(size(lr.cvAccU,1)),...
     'nan','gap',...
     'transparency',0.1);
 hLine(2) = boundedline(time_vec,mean(lr.cvAccMixedUR),std(lr.cvAccMixedUR,0,1,'omitnan')./sqrt(size(lr.cvAccMixedUR,1)),...
@@ -30,8 +39,9 @@ hLine(3) = boundedline(time_vec,mean(lr.cvAccMixedUU),std(lr.cvAccMixedUU,0,1,'o
     'nan','gap',...
     'transparency',0.1);
 hLine(4) = line(time_vec,lr.cvAcc);
-hLine(5) = line(time_vec,lr.cvAccShuf,...
-    'linewidth',2);
+hLine(5) = boundedline(time_vec,mean(lr.cvAccShuf),std(lr.cvAccShuf,0,1,'omitnan')./sqrt(size(lr.cvAccShuf,1)),...
+    'nan','gap',...
+    'transparency',0.1);
 hLine(6) = line(time_vec,lr.cvAccRed);
 
 for i = 1:length(hLine)

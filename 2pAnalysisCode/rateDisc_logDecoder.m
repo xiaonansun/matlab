@@ -23,15 +23,6 @@ if ~exist('shufReps','var') || isempty(shufReps)
     shufReps = 50;
 end
 
-% if ~exist('shuffleAUC','var') || isempty(shuffleAUC)
-%     shuffleAUC = 0;
-% elseif shuffleAUC == 1
-%     nShuf = 100;
-% elseif shuffleAUC ==0
-%     shufAUC = [];
-% end
-
-
 dSize = floor(size(dataIn,2) / stepSize); %maximum number of bins
 
 if isempty(U)
@@ -78,9 +69,9 @@ Cnt = 0;
 for iSteps = 1 : stepSize : dSize*stepSize
 %%    
     if size(dataIn,1)==1
-        cData = nanmean(dataIn(:, iSteps : iSteps + stepSize - 1, :),2);
+        cData = mean(dataIn(:, iSteps : iSteps + stepSize - 1, :),2,'omitnan');
     else
-        cData = squeeze(nanmean(dataIn(:, iSteps : iSteps + stepSize - 1, :),2));
+        cData = squeeze(mean(dataIn(:, iSteps : iSteps + stepSize - 1, :),2,'omitnan'));
     end
     
     Cnt = Cnt + 1;

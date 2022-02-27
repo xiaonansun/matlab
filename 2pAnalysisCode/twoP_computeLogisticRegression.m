@@ -1,6 +1,7 @@
 function twoP_computeLogisticRegression(animal,session,num_reps)
 %% 
-% animal = 'Plex50'; session = '200330a';
+% animal = 'CSP30'; session = '200301a';
+% animal = 'CSP30'; session = '200320';
 
 addpath(genpath(pwd));
 
@@ -23,10 +24,12 @@ idxRed = logical(idxRed(logical(idxCell(:,1))));
 
 %% Logistic regression
 % cVc = eVc;
+clear lr;
 cVc = Vc;
 
-clear lr;
-useTrials = 250; regType = 'lasso'; stepSize = []; decType = 'allChoice'; 
+useTrials = 250; 
+useTrials = twoP_computeTrialCounts(animal,session,useTrials);
+regType = 'lasso'; stepSize = []; decType = 'allChoice'; 
 learnType = 'logistic';
 
 % All neurons, to compute shuffle, multiple iterations will be needed
@@ -37,8 +40,8 @@ disp(['Logistic regression completed for all neurons: ' animal ' ' session ' in 
 
 % Red neurons
 tic
-[lr.cvAccRed, lr.bMapsRed, ~, ~, ~] = ...
-    rateDisc_logDecoder(cVc(idxRed,:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
+[lr.cvAccRed, lr.bMapsRed, ~, ~, lr.cvAccRedShuf] = ...
+    rateDisc_logDecoder(cVc(idxRed,:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,20);
 disp(['Logistic regression completed for tdT+ neurons: ' animal ' ' session ' in ' num2str(toc) ' seconds.']);
 
 % Compute the predictive accuracy of the logistic regression model for
@@ -50,10 +53,10 @@ idxAll = arrayfun(@(x) randperm(x,sum(idxRed)),ones(1,nRep)*length(idxU),'Unifor
 idxUnew = cell2mat(cellfun(@(x) idxU(x),idxAll,'UniformOutput',false));
 cvAccU = zeros(nRep,size(cVc,2));
 parfor i = 1:nRep
-    [cvAccU(i,:), ~, ~, ~, ~] = ...
-        rateDisc_logDecoder(cVc(idxUnew(:,i),:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
+    [cvAccU(i,:), ~, ~, ~, cvAccUShuf(i,:)] = ...
+        rateDisc_logDecoder(cVc(idxUnew(:,i),:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,1);
 end
-lr.cvAccU = cvAccU; clear cvAccU
+lr.cvAccU = cvAccU; lr.cvAccUShuf = cvAccUShuf; clear cvAccU
 disp(['Logistic regression completed for unlabeled (population-matched) neurons: ' animal ' ' session  ' in ' num2str(toc) ' seconds.']);
 
 tic
@@ -61,10 +64,10 @@ idxAll = arrayfun(@(x) randperm(x,sum(idxRed)),ones(1,nRep)*length(idxU),'Unifor
 idxUnew = cell2mat(cellfun(@(x) idxU(x),idxAll,'UniformOutput',false));
 cvAccMixedUR = zeros(nRep,size(cVc,2));
 parfor i = 1:nRep
-    [cvAccMixedUR(i,:), ~, ~, ~, ~] = ...
-        rateDisc_logDecoder(cVc([idxUnew(:,i);find(idxRed)],:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
+    [cvAccMixedUR(i,:), ~, ~, ~, cvAccMixedURShuf(i,:)] = ...
+        rateDisc_logDecoder(cVc([idxUnew(:,i);find(idxRed)],:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,1);
 end
-lr.cvAccMixedUR = cvAccMixedUR; clear cvAccMixedUR
+lr.cvAccMixedUR = cvAccMixedUR; lr.cvAccMixedURShuf = cvAccMixedURShuf; clear cvAccMixedUR
 disp(['Logistic regression completed for mixed (shuffled) neurons: ' animal ' ' session  ' in ' num2str(toc) ' seconds.']);
 
 tic
@@ -72,11 +75,13 @@ idxUU = arrayfun(@(x) randperm(x,2*sum(idxRed)),ones(1,nRep)*length(idxU),'Unifo
 idxUUnew = cell2mat(cellfun(@(x) idxU(x),idxUU,'UniformOutput',false));
 cvAccMixedUU = zeros(nRep,size(cVc,2));
 parfor i = 1:nRep
-    [cvAccMixedUU(i,:), ~, ~, ~, ~] = ...
-        rateDisc_logDecoder(cVc(idxUUnew(:,i),:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,0);
+    [cvAccMixedUU(i,:), ~, ~, ~, cvAccMixedUUShuf(i,:)] = ...
+        rateDisc_logDecoder(cVc(idxUUnew(:,i),:,:), [], cBhv, useTrials, 0, regType, stepSize, decType,learnType,1);
 end
-lr.cvAccMixedUU = cvAccMixedUU; clear cvAccMixedUU
+lr.cvAccMixedUU = cvAccMixedUU; lr.cvAccMixedUUShuf = cvAccMixedUUShuf; clear cvAccMixedUU
 disp(['Logistic regression completed for unlabeled (mixed, shuffled) neurons: ' animal ' ' session ' in ' num2str(toc) ' seconds.']);
+
+lr.useTrials = useTrials;
 
 saveDir= fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir);
 saveFileName = ['LR_' num2str(size(lr.cvAcc,2)) '.mat'];

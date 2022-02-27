@@ -6,7 +6,16 @@ function useIdx = rateDisc_equalizeTrials(useIdx, targIdx, sTargIdx, maxTrials, 
 % For example, this will return a similar amount of correct and incorrect
 % left/right choices but the amount of correct and incorrect trials can
 % differ.
+%
+% useIdx: index of the trials to be included in logistic regression
+% analysis. Currently, only trials with non-NaN values will be selected.
+% For example, at the beginning of each epoch, there should not be any
+% omitted trials. However, as the end of the stimulus and delay (the two 
+% epochs with variable durations) epoch approaches, there will  be NaN
+% values. These time points will be omitted because useIdx will be less
+% than maxTrials.
 
+% targIdx: index of trials 
 if ~exist('sTargIdx','var') || length(sTargIdx) ~= length(sTargIdx)
     sTargIdx = [];
 end

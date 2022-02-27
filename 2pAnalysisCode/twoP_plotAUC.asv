@@ -78,6 +78,7 @@ for i = 1:length(side)
         hold on
         colororder(bar_colors)
         b = bar(side{i}./sum(idxCellTypes),'EdgeColor','none');
+
         title(tile_title{i});
         y_lim_max(i) = max(get(gca,'ylim'));
         xticklabels(x_tick_text);
@@ -87,10 +88,10 @@ for i = 1:length(side)
         if i == 1
             ylabel('Fraction of cells (%)');
         end
+        fig_configAxis(gca);
 end
 linkaxes([ax{:}],'y');
 ylim([0 max(y_lim_max)]);
-fig_configAxis(gca);
 title(hTilesBars,[cell2mat(sAnimal') ' ' sExpertise{:} ' ' sLocation{:} ' ' sDepth{:} ' depth']);
 exportgraphics(hFigBars,fullfile(S.dir.imagingRootDir,'AUC',[cell2mat(sAnimal') '_' sExpertise{:} '_' sLocation{:} '_' sDepth{:} '_AUC_fractions_bars.pdf']));
 

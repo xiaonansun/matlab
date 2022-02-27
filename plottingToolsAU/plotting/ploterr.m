@@ -1,4 +1,3 @@
-
 function hh = ploterr(x, y, xerr, yerr, varargin)
 %PLOTERR General error bar plot.
 %
