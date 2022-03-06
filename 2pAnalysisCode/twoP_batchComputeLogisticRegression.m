@@ -26,11 +26,14 @@ parfor i = iStart:size(exps,1)
         imagingRootDir = S.dir.imagingRootDir;
         imagingSubDir = S.dir.imagingSubDir;
 
+        num_reps = 50;
+        epochs_only = 1;
+        sub_red = 5;
         animal = colAnimal{i};
         session = colSession{i};
 
-        twoP_computeLogisticRegression(animal,session,50);
-        
+%         twoP_computeLogisticRegression(animal,session,50);
+        twoP_computeLogisticRegression(animal,session,num_reps,epochs_only,sub_red)
 %         twoP_aucAnalysisNew(Vc, cBhv, 1, 1, animal, session);
         
     end
