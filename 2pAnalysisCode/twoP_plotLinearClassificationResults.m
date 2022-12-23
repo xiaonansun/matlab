@@ -1,9 +1,9 @@
 function twoP_plotLinearClassificationResults
-%% 2022-02-21: at this time, pelase run one cell at a time. 
+%% 2022-02-21: at this time, please run one cell at a time. 
 
 S = twoP_settings;
 colAnimalID = 1; colDate = 2; colLocation = 3; colDepth = 4; colExpertise = 5; colSession = 6;
-findFileName = 'LR_136.mat';
+findFileName = 'LR_6.mat';
 
 filelist = dir(fullfile(S.dir.imagingRootDir,['**\' findFileName]));
 folderList = {filelist.folder};
@@ -46,8 +46,13 @@ sIdx = find(contains(cAnimal,sAnimal) & ...
     contains(cDepth,sDepth) & ...
     contains(cLocation,sLocation));
 
-% This defines the averaged epoch 
+% This defines the averaged epoch
+numTimePoints = str2num(cell2mat(regexp(findFileName,'\d*','Match')));
+if numTimePoints > 6
 eIdx = [S.segFrames(3) S.segFrames(4)-1];
+else
+    eIdx = [4 4];
+end
 
 A = cell(length(sIdx),1);
 betaR = cell(length(sIdx),1);
@@ -66,7 +71,7 @@ parfor i = 1:length(sIdx)
     try
     ii=sIdx(i);
     lr = load(fullfile(folderList{ii},filenameList{ii}),'lr'); lr = lr.lr;
-    twoP_plotSingleSessionLinearClassification(lr,sMeta(i,:));
+%     twoP_plotSingleSessionLinearClassification(lr,sMeta(i,:));
     idxCell = readNPY(fullfile(filelist(ii).folder,'iscell.npy'));
     idxRedTemp = readNPY(fullfile(filelist(ii).folder,'redcell.npy'));
     idxRed{i} = logical(idxRedTemp(logical(idxCell(:,1))));
@@ -74,7 +79,8 @@ parfor i = 1:length(sIdx)
     betaR{i} = mean(lr.bMaps(idxRed{i},eIdx(1):eIdx(2)),2,'omitnan');
     betaU{i} = mean(lr.bMaps(~idxRed{i},eIdx(1):eIdx(2)),2,'omitnan');
     shufA{i} = mean(lr.cvAccShuf(:,eIdx(1):eIdx(2)),2,'omitnan'); 
-    R{i} = mean(lr.cvAccRed(eIdx(1):eIdx(2)),2,'omitnan');
+    Red{i} = mean(lr.cvAccRed(eIdx(1):eIdx(2)),2,'omitnan');
+    R{i} = mean(lr.cvAccR(:,eIdx(1):eIdx(2)),2,'omitnan');
     U{i} = mean(lr.cvAccU(:,eIdx(1):eIdx(2)),2,'omitnan');
     UR{i} = mean(lr.cvAccMixedUR(:,eIdx(1):eIdx(2)),2,'omitnan');
     UU{i} = mean(lr.cvAccMixedUU(:,eIdx(1):eIdx(2)),2,'omitnan');
@@ -88,7 +94,7 @@ idxCellTypes = twoP_indexMatrix(vertcat(idxRed{:}));
 %% Plot histogram of beta values
 close all
 
-sel = {'Fez','Deep','Trained','MM'};
+sel = {'CSP','Intermediate','Expert','ALM'};
 % sel = {'CSP','Plex','Fez','Deep','Intermediate','Superficial','Trained','Expert','ALM','MM'};
 threshBeta = 0.01;
 subMeta = sMeta(:,[1,3,5,7]);
@@ -111,10 +117,11 @@ end
 color_labeled = {'r','m'}; color_unlabeled = {'g','b'}; 
 
 xval = 1:length(subIdx);
-cA = A; cR = R; cU = U; cUU = UU; cUR = UR; cshufA = shufA;
+cA = A; cRed = Red; cR = R; cU = U; cUU = UU; cUR = UR; cshufA = shufA;
 cA(logical(cellfun(@isempty,cA))) = {single(nan)}; cA = cell2mat(cA);
-cR(logical(cellfun(@isempty,cR))) = {single(nan)}; cR = cell2mat(cR);
+cRed(logical(cellfun(@isempty,cRed))) = {single(nan)}; cRed = cell2mat(cRed);
 cshufA(logical(cellfun(@isempty,cshufA))) = {single(nan)}; 
+cR(logical(cellfun(@isempty,cR))) = {single(nan)};
 cU(logical(cellfun(@isempty,cU))) = {single(nan)};
 cUU(logical(cellfun(@isempty,cUU))) = {single(nan)};
 cUR(logical(cellfun(@isempty,cUR))) = {single(nan)};
@@ -169,11 +176,11 @@ hFigAcc = figure('Position',[500 500 1000 300]);
 tiledlayout(1,5)
 tPure = nexttile(1,[1 2]); hold on;
 hA(1) = ploterr(xval,cA(subIdx),[],[],'sk'); leg1(1) = hA(1); 
-hShuf = ploterr(xval+0.1,cellfun(@mean,cshufA(subIdx)),[],cellfun(@std,cshufA(subIdx)),'sk',...
+hShuf = ploterr(xval+0.1,cellfun(@mean,cshufA(subIdx)),[],cellfun(@std,cshufA(subIdx))./sqrt(cellfun(@length,cshufA(subIdx))),'sk',...
     'abshhxy',0); leg1(2) = hShuf(1); marShuf(1) = hShuf(1);
-hR = ploterr(xval+0.2,cR(subIdx),[],[],'^r',...
+hR = ploterr(xval+0.2,cellfun(@mean,R(subIdx)),[],cellfun(@std,R(subIdx))./sqrt(cellfun(@length,R(subIdx))),'^r',...
     'abshhxy',0); leg1(3) = hR(1); marLabeled(1) = hR(1);
-hU = ploterr(xval+0.3,cellfun(@mean,U(subIdx)),[],cellfun(@std,U(subIdx)),'og',...
+hU = ploterr(xval+0.3,cellfun(@mean,U(subIdx)),[],cellfun(@std,U(subIdx))./sqrt(cellfun(@length,U(subIdx))),'og',...
     'abshhxy',0); leg1(4) = hU(1); marUnlabeled(1) = hU(1);
 ax(1) = gca;
 l(1) = legend(leg1(:), 'All Cells','All Cells - Shuf',...
@@ -181,11 +188,11 @@ l(1) = legend(leg1(:), 'All Cells','All Cells - Shuf',...
 
 tMixed = nexttile(3,[1 2]); hold on;
 hA(2) = ploterr(xval,cA(subIdx),[],[],'sk'); leg2(1) = hA(2);
-hShuf = ploterr(xval+0.1,cellfun(@mean,cshufA(subIdx)),[],cellfun(@std,cshufA(subIdx)),'sk',...
+hShuf = ploterr(xval+0.1,cellfun(@mean,cshufA(subIdx)),[],cellfun(@std,cshufA(subIdx))./sqrt(cellfun(@length,cshufA(subIdx))),'sk',...
     'abshhxy',0); leg2(2) = hShuf(1); marShuf(2) = hShuf(1);
-hUR = ploterr(xval+0.2,cellfun(@mean,UR(subIdx)),[],cellfun(@std,UR(subIdx)),'^m',...
+hUR = ploterr(xval+0.2,cellfun(@mean,UR(subIdx)),[],cellfun(@std,UR(subIdx))./sqrt(cellfun(@length,UR(subIdx))),'^m',...
     'abshhxy',0); leg2(3) = hUR(1); marLabeled(2) = hUR(1);
-hUU = ploterr(xval+0.3,cellfun(@mean,UU(subIdx)),[],cellfun(@std,UU(subIdx)),'ob',...
+hUU = ploterr(xval+0.3,cellfun(@mean,UU(subIdx)),[],cellfun(@std,UU(subIdx))./sqrt(cellfun(@length,UU(subIdx))),'ob',...
     'abshhxy',0); leg2(4) = hUU(1); marUnlabeled(2) = hUU(1);
 ax(2) = gca;
 l(2) = legend(leg2(:),'All Cells','All Cells - Shuf', ...
@@ -221,15 +228,15 @@ marker_color = {'k',[0.5 0.5 0.5],'r','g','m','b'};
 marker_color = flip(marker_color);
 hA = ploterr(1,mean(cA(subIdx),'omitnan'),[],std(cA(subIdx),0,'omitnan'),'sk',...
     'abshhxy',0);
-hShuf = ploterr(1+0.1,mean(cellfun(@mean,cshufA(subIdx)),'omitnan'),[],std(cellfun(@mean,cshufA(subIdx)),0,'omitnan'),'sk',...
+hShuf = ploterr(1+0.1,mean(cellfun(@mean,cshufA(subIdx)),'omitnan'),[],std(cellfun(@mean,cshufA(subIdx)),0,'omitnan')./sqrt(length(cellfun(@mean,cshufA(subIdx)))),'sk',...
     'abshhxy',0);
-hR = ploterr(1+0.2,mean(cR(subIdx),'omitnan'),[],std(cR(subIdx),0,'omitnan'),'^r',...
+hR = ploterr(1+0.2,mean(cellfun(@mean,R(subIdx)),'omitnan'),[],std(cellfun(@mean,R(subIdx)),0,'omitnan')./sqrt(length(cellfun(@mean,R(subIdx)))),'^r',...
     'abshhxy',0);
-hU = ploterr(1+0.3,mean(cellfun(@mean,U(subIdx)),'omitnan'),[],std(cellfun(@mean,U(subIdx)),0,'omitnan'),'og',...
+hU = ploterr(1+0.3,mean(cellfun(@mean,U(subIdx)),'omitnan'),[],std(cellfun(@mean,U(subIdx)),0,'omitnan')./sqrt(length(cellfun(@mean,U(subIdx)))),'og',...
     'abshhxy',0);
-hUR = ploterr(1+0.4,mean(cellfun(@mean,UR(subIdx)),'omitnan'),[],std(cellfun(@mean,UR(subIdx)),0,'omitnan'),'^m',...
+hUR = ploterr(1+0.4,mean(cellfun(@mean,UR(subIdx)),'omitnan'),[],std(cellfun(@mean,UR(subIdx)),0,'omitnan')./sqrt(length(cellfun(@mean,UR(subIdx)))),'^m',...
     'abshhxy',0); 
-hUU = ploterr(1+0.5,mean(cellfun(@mean,UU(subIdx)),'omitnan'),[],std(cellfun(@mean,UU(subIdx)),0,'omitnan'),'ob',...
+hUU = ploterr(1+0.5,mean(cellfun(@mean,UU(subIdx)),'omitnan'),[],std(cellfun(@mean,UU(subIdx)),0,'omitnan')./sqrt(length(cellfun(@mean,UU(subIdx)))),'ob',...
     'abshhxy',0); 
 tSummary.XAxis.Visible = 'off';
 cntLine = 1; cntMarker = 1;
@@ -253,8 +260,8 @@ end
 offsetAxes(tSummary);
 fig_configAxis(tSummary);
 tSummary.YLim = [0.4 1];
-
-saveAccFigurePath = fullfile(S.dir.imagingRootDir, 'LogisticRegression', [horzcat(sel{:}) '_cvAcc.pdf']);
+[~,fn,~] = fileparts(findFileName); 
+saveAccFigurePath = fullfile(S.dir.imagingRootDir, 'LogisticRegression', [horzcat(sel{:}) '_' fn '_cvAcc.pdf']);
 exportgraphics(hFigAcc,saveAccFigurePath); disp(['Figure saved as ' saveAccFigurePath]);
 
 %% Find AUCs that are significantly different from the mean

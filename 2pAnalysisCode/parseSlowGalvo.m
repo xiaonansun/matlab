@@ -1,8 +1,14 @@
 function [frameStarts, incompleteFrames] = parseSlowGalvo(slowGalvo)
-% [frameStarts, incompleteFrames] = parseSlowGalvo(slowGalvo)
-% 
+
 % Identify when frame starts were relative to the analog channels, by
-% parsing the slow galvo channel to find turnarounds.
+% parsing the slow galvo channel to find oscillatory turnarounds.
+% 
+% INPUT:
+% slowGalvo (vector): voltage trace of the analog MOM channel.
+
+% OUTPUTS:
+% frameStarts (vector): index the voltage trace when each frame begins (at the oscillatory turn)
+% incompleteFrames (vector): index of the incomplete frames.
 % 
 % Whenever the recording is stopped, an incomplete frame may or may not be
 % recorded. These incomplete frames are given as the second output.

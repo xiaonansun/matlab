@@ -1,12 +1,12 @@
 function useIdx = rateDisc_equalizeTrials(useIdx, targIdx, sTargIdx, maxTrials, dualCase)
-% ensure that trials in 'useIdx' are equally distributed based on 'targIdx'
+% Ensure that trials in 'useIdx' are equally distributed based on 'targIdx'
 % and 'sTargIdx'. If set, only select up to 'maxTrials'. set 'dualCase' to
 % also adjust trialcounts for 'sTargIdx' but allow their total count to be
 % different (e.g. when there are many more correct than incorrect trials).
 % For example, this will return a similar amount of correct and incorrect
 % left/right choices but the amount of correct and incorrect trials can
 % differ.
-%
+% 
 % useIdx: index of the trials to be included in logistic regression
 % analysis. Currently, only trials with non-NaN values will be selected.
 % For example, at the beginning of each epoch, there should not be any

@@ -1,4 +1,18 @@
 function newVc = rateDisc_getBhvRealignment(Vc, cBhv, segFrames, opts, varargin)
+% Inputs:
+% (1) Vc: this is the trialized neural data ONLY aligned to the stimulus
+% onset
+% (2) cBhv: the trial-matched behavior data. Use selectBehaviorTrials.m
+% before running this function
+% (3) segFrames: 
+% (4) opts
+% (5) varargin(1): animal ID
+% (6) varargin(2): session
+% (7) varargin(3): save_Vc. This input is optional. When missing, empty, or
+% expressed as boolean (true/false), the default will be to save the output 
+% variable Vc as 'Vc.mat'. When his input variable is a character 
+% (e.g. 'sduVc'), the filename will be 'sduVc.mat'
+
 % code to re-align Vc so each trial is aligned to different task episodes.
 % Alignment is done to baseline, handle, stimulus and delay period.
 % 'segFrames' defines how many frames per task episodes should be in the
@@ -28,8 +42,19 @@ if nargin < 5
     disp('Missing animal and session ID imnput, data will not be saved.')
 elseif nargin == 5
     disp('Missing session input, data will not be saved.')
-elseif nargin == 6
+elseif nargin >= 6
     animal = varargin{1}; session = varargin{2};
+end
+
+if nargin == 7 
+    save_Vc = varargin{3};
+    if save_Vc == 1
+        save_Vc = 'Vc'; % default filename
+    elseif save_Vc == 0
+        save_Vc = [];
+    end
+elseif nargin < 7 || isempty(varargin{3})
+    save_Vc = 'Vc'; % default filename
 end
 
 S = twoP_settings;
@@ -81,10 +106,15 @@ if rejCnt > 0
 end
 
 %% Save Vc
-Vc = newVc;
 
-if exist('animal','var') && exist('session','var')
-    VcSavePath = fullfile(S.dir.imagingRootDir,animal,'imaging',session,S.dir.imagingSubDir,'Vc.mat');
-    save(VcSavePath,'Vc');
-    disp(['Saved Vc as ' VcSavePath]);
+if ischar(save_Vc)
+    Vc = newVc;
+    if exist('animal','var') && exist('session','var')
+%         VcSavePath = fullfile(S.dir.imagingRootDir,animal,'imaging',session,S.dir.imagingSubDir,'Vc.mat');
+        VcSavePath = fullfile(S.dir.imagingRootDir,animal,'imaging',session,S.dir.imagingSubDir,[save_Vc '.mat']);
+        save(VcSavePath,'Vc');
+        disp(['Saved PETH as ' VcSavePath]);
+    end
+else
+    disp('Did not save PETH.')
 end

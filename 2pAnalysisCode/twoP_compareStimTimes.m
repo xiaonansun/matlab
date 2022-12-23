@@ -1,8 +1,12 @@
 function twoP_compareStimTimes(D,bhv)
 %%
 % This function computes the inter-stimulus interval between adjacent
-% trials and compares the timing between MScan analog timestamps versus Bpod
+% trials and compares the insterstimulus timing between MScan analog timestamps versus Bpod
 % timestamps
+% In the ideal world, the plotted data points should lie on unity
+
+S = twoP_settings;
+
 unityX = [0 20];
 unityY = [0 20];
 
@@ -19,7 +23,7 @@ d_trialStimTime = diff(trialStimTime);
 shuf_d_trialStimTime = d_trialStimTime(randperm(length(d_trialStimTime)));
 shift_d_trialStimTime = circshift(d_trialStimTime,1);
 
-mscanStimTime = nan(1,length(D.trialNumbers));
+% mscanStimTime = nan(1,length(D.trialNumbers));
 mscanStimTime = D.stimSamplesOrig/1000;
 d_mscanStimTime = diff(mscanStimTime);
 
@@ -54,10 +58,11 @@ legend({'unity','shuffled','shifted','unshuffled'},...
     'Box','off');
 ax = gca;
 fig_configAxis(ax);
+% offsetAxes(ax);
 title(['Inter-stimulus interval across consecutive trials: ' D.animal ' ' D.session]);
 
 % Subpanel
-axes('Position',[0.85 0.2 .05 .4])
+axes('Position',[0.8 0.2 .05 .4])
 hold on;
 marker_size = 2;
 scatter(rand(1,length(dShifted)),dShifted,marker_size,...
@@ -79,4 +84,13 @@ set(gca, 'YScale', 'log',...
 ax.XAxis.Visible = 'off';
 % end subpanel
 
-exportgraphics(fISI,fullfile(D.suite2pDir,'inter_stimulus_interval.pdf'));
+% axes('Position',[0.85 0.2 .05 .4])
+% violinPlot(dShifted','histOri','right','widthDiv',[2 1],'showMM',0,'color','k')
+% ax = gca; fig_configAxis(ax);
+% set(gca, 'YScale', 'log',...
+%     'Box','off',...
+%     'XTick',[],...
+%     'Color','none');
+
+save_fig_filepath = fullfile(S.dir.imagingRootDir,D.animal,'imaging',D.session,S.dir.imagingSubDir,'inter_stimulus_interval.pdf');
+exportgraphics(fISI,save_fig_filepath);

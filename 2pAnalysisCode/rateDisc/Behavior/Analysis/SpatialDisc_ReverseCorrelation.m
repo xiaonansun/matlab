@@ -38,7 +38,7 @@ end
 
 %% run basic analysis to create appended array
 [Performance,bhv] = SpatialDisc_BasicAnalysis(Animal{1},path,lSessions,highDetection,mmOnly);
-
+% [Performance,bhv] = SpatialDisc_BasicAnalysis(Animal,path,lSessions,highDetection,mmOnly);
 %% compute reverse correlation
 leftRate = zeros(length(bhv.stimEvents),round(stimDuration/binSize)); %allocate leftRate array
 rightRate = zeros(length(bhv.stimEvents),round(stimDuration/binSize)); %allocate rightRate array

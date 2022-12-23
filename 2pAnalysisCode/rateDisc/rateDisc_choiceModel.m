@@ -1,5 +1,15 @@
-function rateDisc_choiceModel(cPath,Animal,Rec,dType)
+function rateDisc_choiceModel(cPath,Animal,Rec,dType,varargin)
+%%
 %   dbstop rateDisc_choiceModel 102
+% Last Updated 2020-12-18: THIS SHOULD BE RUN AS A FUNCTION. 
+% Update 2022-10-26: Richard
+% - added bhvFilePath as an OPTIONAL input variable. As an input, one can directly
+% specify the path of the behavior file. Instead of copying the file to
+% another location, one can directly point to the path on the server.
+
+S = twoP_settings;
+outputDir = fullfile(S.dir.imagingRootDir,Animal,'imaging',Rec,'encodingModel');
+if ~exist(outputDir,'dir'); mkdir(outputDir); end
 
 if ~strcmpi(cPath(end),filesep)
     cPath = [cPath filesep];
@@ -9,12 +19,20 @@ if ~exist('dType', 'var') || isempty(dType)
     dType = 'Widefield'; %default is widefield data
 end
 
+if nargin <= 4
+    optPaths = myDirs;
+elseif nargin > 4
+    optPaths = varargin{1};
+end
+
+
 Paradigm = 'SpatialDisc';
 cPath = [cPath Animal filesep Paradigm filesep Rec filesep]; %Widefield data path
 if ispc
     sPath = ['\\grid-hs\churchland_nlsas_data\data\BpodImager\Animals\' Animal filesep Paradigm filesep Rec filesep]; %server data path. not used on hpc.
 else
-    sPath = ['/sonas-hs/churchland/nlsas/data/data/BpodImager/Animals/' Animal filesep Paradigm filesep Rec filesep]; %server data path. not used on hpc.
+    sPath = ['/grid/churchland/data/data/BpodImager/Animals/' Animal filesep Paradigm filesep Rec filesep]; %server data path. not used on hpc.
+%     sPath = ['/sonas-hs/churchland/nlsas/data/data/BpodImager/Animals/' Animal filesep Paradigm filesep Rec filesep];
 end
 
 % define trigger lines and optshelp 
@@ -28,10 +46,14 @@ if strcmpi(dType,'twoP')
 elseif strcmpi(dType,'Widefield')
     piezoLine = 2;     % channel in the analog data that contains data from piezo sensor
     stimLine = 6;      % channel in the analog data that contains stimulus trigger.
-    load([cPath 'opts.mat'], 'opts'); % get some options from imaging data
+    if isfield(optPaths,'twoPdataDir')
+        load(fullfile(optPaths.twoPdataDir,'opts.mat'), 'opts'); % get some options from imaging data
+    else
+        load([cPath 'opts.mat'], 'opts'); % get some options from imaging data
+    end
 end
 
-%% general variables
+%% Define general variables
 sRate=opts.frameRate;
 if opts.frameRate == 15
     vcFile = 'Vc.mat';
@@ -65,11 +87,26 @@ gaussShift = 1;     % inter-frame interval between regressors. Will use only eve
 opMotorLabels = {'lLick' 'rLick' 'lGrab' 'lGrabRel' 'rGrab' 'rGrabRel'}; %operant motor regressors
 dims = 200; %number of dims in Vc that are used in the model
 
-%% load data
-bhvFile = dir([cPath filesep Animal '_' Paradigm '*.mat']);
-load([cPath bhvFile(1).name],'SessionData'); %load behavior data
+%% Load imaging and behavior data
+
+% Load behavior data
+if isfield(optPaths,'bhvFilePath') && strcmpi(dType,'twoP')
+    load(optPaths.bhvFilePath,'SessionData'); %load behavior data
+else
+    bhvFile = dir([cPath filesep Animal '_' Paradigm '*.mat']);
+    load([cPath bhvFile(1).name],'SessionData'); %load behavior data
+end
+
+% if exist('bhvFilePath','var') || ~isempty(bhvFilePath) % 2022-11-22: need to modify this line
+%     load(bhvFilePath,'SessionData'); %load behavior data
+% else
+%     bhvFile = dir([cPath filesep Animal '_' Paradigm '*.mat']);
+%     load([cPath bhvFile(1).name],'SessionData'); %load behavior data
+% end
+
 SessionData.TrialStartTime = SessionData.TrialStartTime * 86400; %convert trailstart timestamps to seconds
 
+% Load imaging data
 if strcmpi(dType,'Widefield')
     if exist([cPath vcFile],'file') ~= 2 %check if data file exists and get from server otherwise
         copyfile([sPath vcFile],[cPath vcFile]);
@@ -87,8 +124,11 @@ if strcmpi(dType,'Widefield')
     Vc(:,:,ind) = [];
 
 elseif strcmpi(dType,'twoP')
-    
-    load([cPath 'data'], 'data'); %load 2p data
+    if isfield(optPaths,'twoPdataPath')
+        load(optPaths.twoPdataPath,'data');
+    else
+        load([cPath 'data'], 'data'); %load 2p data
+    end
     % ensure there are not too many trials in the dataset
     bTrials = data.trialNumbers;
 
@@ -106,8 +146,12 @@ elseif strcmpi(dType,'twoP')
     data.DS(:,:,~ismember(data.trialNumbers,bTrials)) = [];
     data.analog(:,:,~ismember(data.trialNumbers,bTrials)) = [];
     
+    if ~isfield(data,'smoothed') || data.smoothed == 1
     Vc = data.neural; %Vc is now neurons x frames x trials
-    Vc = smoothCol(Vc, 2, 5, 'gauss'); %add some smoothing here
+    else
+    Vc = smoothCol(data.neural, 2, 5, 'gauss'); %add some smoothing here
+    end
+    
     dims = size(data.neural,1); %dims is now # of neurons instead
 end
 bhv = selectBehaviorTrials(SessionData,bTrials); %only use completed trials that are in the Vc dataset
@@ -122,75 +166,127 @@ Vc = Vc(:,:,choiceIdx);
 bhv = selectBehaviorTrials(SessionData,bTrials); %only use completed trials that are in the Vc dataset   
 trialCnt = length(bTrials);
 
-%% load behavior data
-if exist([cPath 'BehaviorVideo' filesep 'SVD_CombinedSegments.mat'],'file') ~= 2 || ... %check if svd behavior exists on hdd and pull from server otherwise
-        exist([cPath 'BehaviorVideo' filesep 'motionSVD_CombinedSegments.mat'],'file') ~= 2
+%% Load behavior video data
+% if exist([cPath 'BehaviorVideo' filesep 'SVD_CombinedSegments.mat'],'file') ~= 2 || ... %check if svd behavior exists on hdd and pull from server otherwise
+%         exist([cPath 'BehaviorVideo' filesep 'motionSVD_CombinedSegments.mat'],'file') ~= 2
+%     
+%     if ~exist([cPath 'BehaviorVideo' filesep], 'dir')
+%         mkdir([cPath 'BehaviorVideo' filesep]);
+%     end
+%     copyfile([sPath 'BehaviorVideo' filesep 'SVD_CombinedSegments.mat'],[cPath 'BehaviorVideo' filesep 'SVD_CombinedSegments.mat']);
+%     copyfile([sPath 'BehaviorVideo' filesep 'motionSVD_CombinedSegments.mat'],[cPath 'BehaviorVideo' filesep 'motionSVD_CombinedSegments.mat']);
+%     copyfile([sPath 'BehaviorVideo' filesep 'FilteredPupil.mat'],[cPath 'BehaviorVideo' filesep 'FilteredPupil.mat']);
+%     copyfile([sPath 'BehaviorVideo' filesep 'segInd1.mat'],[cPath 'BehaviorVideo' filesep 'segInd1.mat']);
+%     copyfile([sPath 'BehaviorVideo' filesep 'segInd2.mat'],[cPath 'BehaviorVideo' filesep 'segInd2.mat']);
+%     
+%     movFiles = dir([sPath 'BehaviorVideo' filesep '*Video_*1.mj2']);
+%     copyfile([sPath 'BehaviorVideo' filesep movFiles(1).name],[cPath 'BehaviorVideo' filesep movFiles(1).name]);
+%     movFiles = dir([sPath 'BehaviorVideo' filesep '*Video_*2.mj2']);
+%     copyfile([sPath 'BehaviorVideo' filesep movFiles(1).name],[cPath 'BehaviorVideo' filesep movFiles(1).name]);
+%     
+%     svdFiles = dir([sPath 'BehaviorVideo' filesep '*SVD*-Seg*']);
+%     for iFiles = 1:length(svdFiles)
+%         copyfile([sPath 'BehaviorVideo' filesep svdFiles(iFiles).name],[cPath 'BehaviorVideo' filesep svdFiles(iFiles).name]);
+%     end
+% end
+
+if isfield(optPaths,'bhvVidDir') && strcmpi(dType,'twoP') % If analyzing twoP data reading data directly from the server
+    bhvVidDir = optPaths.bhvVidDir;
+    load(fullfile(bhvVidDir,'SVD_CombinedSegments.mat'),'vidV'); %load behavior video data    
+%     load([cPath 'BehaviorVideo' filesep 'SVD_CombinedSegments.mat'],'vidV'); %load behavior video data
+    V1 = vidV(:,1:bhvDimCnt); %behavioral video regressors
+    load(fullfile(bhvVidDir,'motionSVD_CombinedSegments.mat'),'vidV'); %load behavior video data    
+%     load([cPath 'BehaviorVideo' filesep 'motionSVD_CombinedSegments.mat'],'vidV'); %load abs motion video data
+    V2 = vidV(:,1:bhvDimCnt); % motion regressors
     
-    if ~exist([cPath 'BehaviorVideo' filesep], 'dir')
-        mkdir([cPath 'BehaviorVideo' filesep]);
+    % check options that were used for dimensionality reduction and ensure that imaging and video data trials are equal length
+    load(fullfile(bhvVidDir,'bhvOpts.mat'), 'bhvOpts'); %load abs motion video data
+%     load([cPath 'BehaviorVideo' filesep 'bhvOpts.mat'], 'bhvOpts'); %load abs motion video data
+    bhvRate = bhvOpts.targRate; %framerate of face camera
+    if (bhvOpts.preStimDur + bhvOpts.postStimDur) > (opts.preStim + opts.postStim) %if behavioral video trials are longer than imaging data
+        V1 = reshape(V1, [], SessionData.nTrials, bhvDimCnt);
+        V2 = reshape(V2, [], SessionData.nTrials, bhvDimCnt);
+        if bhvOpts.preStimDur > opts.preStim
+            frameDiff = ceil((bhvOpts.preStimDur - opts.preStim) * bhvRate); %overhead in behavioral frames that can be removed.
+            V1 = V1(frameDiff+1:end, :, :); %cut data to size
+            V2 = V2(frameDiff+1:end, :, :);
+        end
+        if bhvOpts.postStimDur > opts.postStim
+            frameDiff = ceil((bhvOpts.postStimDur - opts.postStim) * bhvRate); %overhead in behavioral frames that can be removed.
+            V1 = V1(1 : end - frameDiff, :, :); %cut data to size
+            V2 = V2(1 : end - frameDiff, :, :);
+        end
+        V1 = reshape(V1, [], bhvDimCnt);
+        V2 = reshape(V2, [], bhvDimCnt);
     end
-    copyfile([sPath 'BehaviorVideo' filesep 'SVD_CombinedSegments.mat'],[cPath 'BehaviorVideo' filesep 'SVD_CombinedSegments.mat']);
-    copyfile([sPath 'BehaviorVideo' filesep 'motionSVD_CombinedSegments.mat'],[cPath 'BehaviorVideo' filesep 'motionSVD_CombinedSegments.mat']);
-    copyfile([sPath 'BehaviorVideo' filesep 'FilteredPupil.mat'],[cPath 'BehaviorVideo' filesep 'FilteredPupil.mat']);
-    copyfile([sPath 'BehaviorVideo' filesep 'segInd1.mat'],[cPath 'BehaviorVideo' filesep 'segInd1.mat']);
-    copyfile([sPath 'BehaviorVideo' filesep 'segInd2.mat'],[cPath 'BehaviorVideo' filesep 'segInd2.mat']);
     
-    movFiles = dir([sPath 'BehaviorVideo' filesep '*Video_*1.mj2']);
-    copyfile([sPath 'BehaviorVideo' filesep movFiles(1).name],[cPath 'BehaviorVideo' filesep movFiles(1).name]);
-    movFiles = dir([sPath 'BehaviorVideo' filesep '*Video_*2.mj2']);
-    copyfile([sPath 'BehaviorVideo' filesep movFiles(1).name],[cPath 'BehaviorVideo' filesep movFiles(1).name]);
+    load(fullfile(bhvVidDir,'FilteredPupil.mat'), 'pTime', 'fPupil', 'sPupil', 'whisker', 'faceM', 'bodyM', 'nose', 'bTime'); %load pupil data
+%     load([cPath 'BehaviorVideo' filesep 'FilteredPupil.mat'], 'pTime', 'fPupil', 'sPupil', 'whisker', 'faceM', 'bodyM', 'nose', 'bTime'); %load pupil data
+    %check if timestamps from pupil data are shifted against bhv data
+    timeCheck1 = (SessionData.TrialStartTime(1)) - (pTime{1}(1)); %time difference between first acquired frame and onset of first trial
+    timeCheck2 = (SessionData.TrialStartTime(1)) - (bTime{1}(1)); %time difference between first acquired frame and onset of first trial
+    if (timeCheck1 > 3590 && timeCheck1 < 3610) && (timeCheck2 > 3590 && timeCheck2 < 3610) %timeshift by one hour (+- 10seconds)
+        warning('Behavioral and video timestamps are shifted by 1h. Will adjust timestamps in video data accordingly.')
+        for iTrials = 1 : length(pTime)
+            pTime{iTrials} = pTime{iTrials} + 3600; %add one hour
+            bTime{iTrials} = bTime{iTrials} + 3600; %add one hour
+        end
+    elseif timeCheck1 > 30 || timeCheck1 < -30 || timeCheck2 > 30 || timeCheck2 < -30
+        error('Something wrong with timestamps in behavior and video data. Time difference is larger as 30 seconds.')
+    end
     
-    svdFiles = dir([sPath 'BehaviorVideo' filesep '*SVD*-Seg*']);
-    for iFiles = 1:length(svdFiles)
-        copyfile([sPath 'BehaviorVideo' filesep svdFiles(iFiles).name],[cPath 'BehaviorVideo' filesep svdFiles(iFiles).name]);
+    if any(bTrials > length(pTime))
+        warning(['There are insufficient trials in the pupil data. Rejected the last ' num2str(sum(bTrials > length(pTime))) ' trial(s)']);
+        bTrials(bTrials > length(pTime)) = [];
+        trialCnt = length(bTrials);
     end
-end
-
-load([cPath 'BehaviorVideo' filesep 'SVD_CombinedSegments.mat'],'vidV'); %load behavior video data
-V1 = vidV(:,1:bhvDimCnt); %behavioral video regressors
-load([cPath 'BehaviorVideo' filesep 'motionSVD_CombinedSegments.mat'],'vidV'); %load abs motion video data
-V2 = vidV(:,1:bhvDimCnt); % motion regressors
-
-% check options that were used for dimensionality reduction and ensure that imaging and video data trials are equal length
-load([cPath 'BehaviorVideo' filesep 'bhvOpts.mat'], 'bhvOpts'); %load abs motion video data
-bhvRate = bhvOpts.targRate; %framerate of face camera
-if (bhvOpts.preStimDur + bhvOpts.postStimDur) > (opts.preStim + opts.postStim) %if behavioral video trials are longer than imaging data
-    V1 = reshape(V1, [], SessionData.nTrials, bhvDimCnt);
-    V2 = reshape(V2, [], SessionData.nTrials, bhvDimCnt);
-    if bhvOpts.preStimDur > opts.preStim
-        frameDiff = ceil((bhvOpts.preStimDur - opts.preStim) * bhvRate); %overhead in behavioral frames that can be removed.
-        V1 = V1(frameDiff+1:end, :, :); %cut data to size
-        V2 = V2(frameDiff+1:end, :, :);
+else
+    load([cPath 'BehaviorVideo' filesep 'SVD_CombinedSegments.mat'],'vidV'); %load behavior video data
+    V1 = vidV(:,1:bhvDimCnt); %behavioral video regressors
+    load([cPath 'BehaviorVideo' filesep 'motionSVD_CombinedSegments.mat'],'vidV'); %load abs motion video data
+    V2 = vidV(:,1:bhvDimCnt); % motion regressors
+    
+    % check options that were used for dimensionality reduction and ensure that imaging and video data trials are equal length
+    load([cPath 'BehaviorVideo' filesep 'bhvOpts.mat'], 'bhvOpts'); %load abs motion video data
+    bhvRate = bhvOpts.targRate; %framerate of face camera
+    if (bhvOpts.preStimDur + bhvOpts.postStimDur) > (opts.preStim + opts.postStim) %if behavioral video trials are longer than imaging data
+        V1 = reshape(V1, [], SessionData.nTrials, bhvDimCnt);
+        V2 = reshape(V2, [], SessionData.nTrials, bhvDimCnt);
+        if bhvOpts.preStimDur > opts.preStim
+            frameDiff = ceil((bhvOpts.preStimDur - opts.preStim) * bhvRate); %overhead in behavioral frames that can be removed.
+            V1 = V1(frameDiff+1:end, :, :); %cut data to size
+            V2 = V2(frameDiff+1:end, :, :);
+        end
+        if bhvOpts.postStimDur > opts.postStim
+            frameDiff = ceil((bhvOpts.postStimDur - opts.postStim) * bhvRate); %overhead in behavioral frames that can be removed.
+            V1 = V1(1 : end - frameDiff, :, :); %cut data to size
+            V2 = V2(1 : end - frameDiff, :, :);
+        end
+        V1 = reshape(V1, [], bhvDimCnt);
+        V2 = reshape(V2, [], bhvDimCnt);
     end
-    if bhvOpts.postStimDur > opts.postStim
-        frameDiff = ceil((bhvOpts.postStimDur - opts.postStim) * bhvRate); %overhead in behavioral frames that can be removed.
-        V1 = V1(1 : end - frameDiff, :, :); %cut data to size
-        V2 = V2(1 : end - frameDiff, :, :);
+    
+    load([cPath 'BehaviorVideo' filesep 'FilteredPupil.mat'], 'pTime', 'fPupil', 'sPupil', 'whisker', 'faceM', 'bodyM', 'nose', 'bTime'); %load pupil data
+    %check if timestamps from pupil data are shifted against bhv data
+    timeCheck1 = (SessionData.TrialStartTime(1)) - (pTime{1}(1)); %time difference between first acquired frame and onset of first trial
+    timeCheck2 = (SessionData.TrialStartTime(1)) - (bTime{1}(1)); %time difference between first acquired frame and onset of first trial
+    if (timeCheck1 > 3590 && timeCheck1 < 3610) && (timeCheck2 > 3590 && timeCheck2 < 3610) %timeshift by one hour (+- 10seconds)
+        warning('Behavioral and video timestamps are shifted by 1h. Will adjust timestamps in video data accordingly.')
+        for iTrials = 1 : length(pTime)
+            pTime{iTrials} = pTime{iTrials} + 3600; %add one hour
+            bTime{iTrials} = bTime{iTrials} + 3600; %add one hour
+        end
+    elseif timeCheck1 > 30 || timeCheck1 < -30 || timeCheck2 > 30 || timeCheck2 < -30
+        error('Something wrong with timestamps in behavior and video data. Time difference is larger as 30 seconds.')
     end
-    V1 = reshape(V1, [], bhvDimCnt);
-    V2 = reshape(V2, [], bhvDimCnt);
-end
-
-load([cPath 'BehaviorVideo' filesep 'FilteredPupil.mat'], 'pTime', 'fPupil', 'sPupil', 'whisker', 'faceM', 'bodyM', 'nose', 'bTime'); %load pupil data
-%check if timestamps from pupil data are shifted against bhv data
-timeCheck1 = (SessionData.TrialStartTime(1)) - (pTime{1}(1)); %time difference between first acquired frame and onset of first trial
-timeCheck2 = (SessionData.TrialStartTime(1)) - (bTime{1}(1)); %time difference between first acquired frame and onset of first trial
-if (timeCheck1 > 3590 && timeCheck1 < 3610) && (timeCheck2 > 3590 && timeCheck2 < 3610) %timeshift by one hour (+- 10seconds)
-    warning('Behavioral and video timestamps are shifted by 1h. Will adjust timestamps in video data accordingly.')
-    for iTrials = 1 : length(pTime)
-        pTime{iTrials} = pTime{iTrials} + 3600; %add one hour
-        bTime{iTrials} = bTime{iTrials} + 3600; %add one hour
+    
+    if any(bTrials > length(pTime))
+        warning(['There are insufficient trials in the pupil data. Rejected the last ' num2str(sum(bTrials > length(pTime))) ' trial(s)']);
+        bTrials(bTrials > length(pTime)) = [];
+        trialCnt = length(bTrials);
     end
-elseif timeCheck1 > 30 || timeCheck1 < -30 || timeCheck2 > 30 || timeCheck2 < -30
-    error('Something wrong with timestamps in behavior and video data. Time difference is larger as 30 seconds.')
+    
 end
-
-if any(bTrials > length(pTime))
-    warning(['There are insufficient trials in the pupil data. Rejected the last ' num2str(sum(bTrials > length(pTime))) ' trial(s)']);
-    bTrials(bTrials > length(pTime)) = [];
-    trialCnt = length(bTrials);
-end
-
 %% find events in BPod time - All timestamps are relative to stimulus onset event to synchronize to imaging data later
 % pre-allocate vectors
 lickL = cell(1,trialCnt);
@@ -939,7 +1035,10 @@ end
 fullR(:,rejIdx) = []; %clear empty regressors
 fprintf(1, 'Rejected %d/%d empty regressors\n', sum(rejIdx),length(rejIdx));
 
-%% save modified Vc
+%% save modified Vc 
+
+if exist('outputDir','var'); cPath = [outputDir filesep]; end
+
 Vc(:,trialIdx) = []; %clear bad trials
 Vc = bsxfun(@minus, Vc, mean(Vc,2)); %should be zero-mean
 
@@ -975,11 +1074,12 @@ clear stimR lGrabR lGrabRelR rGrabR rGrabRelR waterR lLickR rLickR ...
 
 %% run ridge regression in low-D
 % run model. Zero-mean without intercept. only video qr.
+
 [ridgeVals, dimBeta] = ridgeMML(Vc', fullR, true); %get ridge penalties and beta weights.
 fprintf('Mean ridge penalty for original video, zero-mean model: %f\n', mean(ridgeVals));
 save([cPath 'orgdimBeta.mat'], 'dimBeta', 'ridgeVals');
 save([cPath filesep 'orgregData.mat'], 'fullR', 'spoutR', 'leverInR', 'rejIdx' ,'trialIdx', 'regIdx', 'regLabels','gaussShift','fullQRR','-v7.3');
-[Vm, fullBeta, fullR, fullIdx, fullRidge, fullLabels, fullMap, fullMovie] = crossValModel(regLabels);
+[Vm, fullBeta, fullR, fullIdx, fullRidge, fullLabels, fullMap, fullMovie] = crossValModel(regLabels); % full means both task and motor regressors are included in the cross validation
 save([cPath 'orgfullcorr.mat'], 'Vm', 'fullBeta', 'fullIdx', 'fullR', 'fullLabels', 'fullRidge', 'regLabels', 'fullMap', 'fullMovie','-v7.3');
 
 mInd = ismember(regIdx(~rejIdx), find(ismember(regLabels,motorLabels)));
@@ -1142,7 +1242,9 @@ save([cPath filesep 'nomeantaskregData.mat'], 'taskLabels', 'taskMap', 'taskMovi
                 else
                     [~, cBeta{iFolds}] = ridgeMML(Vc(:,dataIdx)', cR(dataIdx,:), true, cRidge); %get beta weights for task only model. ridge value should be the same as in the first run.
                 end
-                Vm(:,~dataIdx) = (cR(~dataIdx,:) * cBeta{iFolds})'; %predict remaining data
+                Vm(:,~dataIdx) = (cR(~dataIdx,:) * cBeta{iFolds})'; %predict remaining data: 
+                % cR(~dataIdx,:) is the held-out design matrix 
+                %  cBeta{iFolds} are the betas of the training data
                 
                 if rem(iFolds,ridgeFolds/5) == 0
                     fprintf(1, 'Current fold is %d out of %d\n', iFolds, ridgeFolds);

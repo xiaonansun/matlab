@@ -1,11 +1,44 @@
 function [cvAcc, bMaps, mdlAll, trialCnt, cvAccShuf] = rateDisc_logDecoder(dataIn, U, bhv, useTrials, targMod, regType, stepSize, decType, learnType, shufReps)
 % 2021-06-23 added trialNumbers
-% run logistic regression decoder on widefield data.
+% run logistic regression decoder on neural data.
+
 % cvAcc and bMaps have 5 decoder outputs each: 1 = all trials choice, 2 =
 % balanced trials choice, 3 = balanced trials stimulus, 4 = correct trials
 % choice, 5 = error trials choice
 % 2021-07-08 Richard changed input variable "data" to "dataIn" to prevent
 % variable name conflicts during debugging
+
+% INPUTS
+% dataIn: input neural data. 3 dimensional matrix. neuron_ID x time x
+% trial_ID (rows are neurons/cells, columns are samples in time, 3rd
+% dimension is trials)
+
+% U: empty for now
+
+% bhv: behavior data, in this case Bpod struct
+
+% useTrials: use only selected trials. In this case, trials will be
+% selected by the function rateDisc_equalizeTrials, which balances trials.
+
+% targMod: target modality: 0 for all trials, number >= 1 for other
+% modalities.
+
+% regType: regularization type, lasso vs ridge regression
+
+% stepSize: subsampling of recordings with high sampling rates. for 2p data
+% (usually recorded at 30 fps), the stepSize input variable can be left
+% empty, subsequently defaulting the value to 1, where data at every time
+% point is used for analysis. If stepSize > 1, then time points will be
+% skipped based on the stepSize
+
+% decType: decoder type. Specify a task variable for the decoder to work on.
+% The options are 'allChoice', 'allStim', 'correct', 'error', 'choice', 'preChoice',
+% 'nextChoice'.
+
+% learnType: This variable is the input for the fitclinear 'Learner' option
+% options are 'logistic' versus 'svm'.
+
+% shufReps: number of repetitions for shuffling 
 
 if ~exist('decType','var') || isempty(decType)
     decType = 'allChoice';

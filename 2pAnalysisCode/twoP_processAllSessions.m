@@ -49,7 +49,7 @@ parfor i = iStart:size(exps,1)
     %% execute this cell to load one session. Just modify the animal and session variables as needed
     
     if ~exist('N','var') || N == 0
-        animal = 'Plex50'; session = '200322'; % <---- modify this line to load one session
+        animal = 'CSP27'; session = '20200328'; % <---- modify this line to load one session
         procSingleSession = 1;
     else
         animal = colAnimal{i};
@@ -57,23 +57,32 @@ parfor i = iStart:size(exps,1)
     end
     
     try
-        
-        %         if ~exist('N','var') || N == 0
-        %         animal = 'CSP27'; session = '20200319';
-        %         end
+        % NOTE: When loading isredcell, this must be loaded from the npy
+        % files, not from any previously-saved .mat files. If anything
+        % changed with cell curation, loading .mat would not be able to
+        % load the updated neuron definitions.
         
         [data,SessionData]=twoP_loadImgBhvData(animal,session, true, 10, false);
-        
-        D = twoP_combineStimAlignedData(data);
+%         data = twoP_zscoreTrializeContinuousSDU(animal, session, true);
+
+        D = twoP_combineStimAlignedData(data); % Combines fields of data struct that are organized in cells (this occurs when imaging was interrupted by an MScan crash)
         D = twoP_adjustData(D,SessionData);
         
         cBhv = selectBehaviorTrials(SessionData, D.trialNumbers,animal, session); %% very important in matching trial indices
         
-        Vc = rateDisc_getBhvRealignment(D.neural, cBhv, [], [], animal, session); % re-aligned imaging data to trial epoches
-        
+        rateDisc_getBhvRealignment(D.neural, cBhv, [], [], animal, session); % Re-aligns imaging data to epoches
+        rateDisc_getBhvRealignment(D.sdu, cBhv, [], [], animal, session, 'sduVc'); % Re-aligns z-scored imaging data to epoches
+    
+        % REQUEST: A histogram should be added to the right side of the
+        % scatter plot. This is necessary since there may be a few black
+        % points buried within the red and blue points that may be subtle.
+        % Having black data points distributed within the red and blue
+        % data indicates some twoP data not matched to the bpod data.
         twoP_compareStimTimes(D,cBhv);
-        
+    catch ME
+        disp(ME.message);
     end
+    
     if ~exist('procSingleSession','var') || procSingleSession == 0
         close all;
     end

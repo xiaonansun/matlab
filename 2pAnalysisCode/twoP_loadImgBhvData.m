@@ -1,53 +1,47 @@
 function [data,bhv,npy]=twoP_loadImgBhvData(varargin)
 
+%% Loads suite2p-processed two-photon imaging data and behavior data
+% and trializes imaging data by aligning to the onset of the 
+% sensory stimulus
+
 % Inputs:
 % (1) animal: the name of the animal, e.g. 'CSP27'
 % (2) session: name of the session, e.g. '200329'
-% (3) doSmooth: boolean
-% (4) filterWindow: savitsky golay filter windows length
-% (5)
+% (3) doSmooth: boolean (1 for yes, 0 for no)
+% (4) filterWindow: filter windows length
+% (5) loadSavedData: load data that is already saved as data.mat
 
 % Outputs
 % (1) npy:
-% (2) data: two photon data in a 3D matrix
+% (2) data: two photon data in a 3D matrix (neuron x frames x trials)
 % (3) bhv: behavior data (SessionData)
-% (4) bhvFilePath: path of the Bpod behavior file
-% (5) suite2pDir: directory of the s2p-processed 2p data files
+
 disp(newline);
-exps = twoP_getAcquisitionRecord;
+
+% First load some constants and required data
+exps = twoP_getAcquisitionRecord; % loads the 2p acquisition record from the google sheets file
+S = twoP_settings;
+
+% Specify the animal and the session IDs
 animal = varargin{1};
 session = varargin{2};
 
 if nargin > 2
     doSmooth = varargin{3};
-    filterWindow = varargin{4};
-    loadSavedData = varargin{5};
     if isempty(doSmooth); doSmooth = false; end
-    if isempty(loadSavedData); loadSavedData=false; end    
+    filterWindow = varargin{4};
+    if isempty(filterWindow); filterWindow = 10; end
+    loadSavedData = varargin{5};
+    if isempty(loadSavedData); loadSavedData=false; end
 else
     doSmooth = true;
     filterWindow = 10;
     loadSavedData = false;
 end
 
-analysisFileName = [animal '_' session];
+% analysisFileName = [animal '_' session];
 
-% Initialize directories
-S = twoP_settings;
-
-% if convertCharsToStrings(getenv('COMPUTERNAME')) == convertCharsToStrings('MANHASSET')
-%     imagingRootDir = 'G:\2PData';
-% elseif convertCharsToStrings(getenv('COMPUTERNAME')) == convertCharsToStrings('SUNHP')
-%     %     imagingRootDir = '\\churchlandNAS\homes\DOMAIN=CSHL\smusall\suite2p';
-%     imagingRootDir = '\\grid-hs\churchland_nlsas_data\data\richard_s2p_npy';
-%     codeRootDir = 'C:\Users\Xiaonan Richard Sun\Dropbox\Users\Richard\matlab';
-%     bhvRootDir = '\\grid-hs\churchland_nlsas_data\data\Behavior_Simon';
-% elseif convertCharsToStrings(computer) == convertCharsToStrings('GLNXA64') || isunix == 1
-%     imagingRootDir = '/grid/churchland/data/data/richard_s2p_npy';
-%     codeRootDir = '/grid/churchland/home/xisun/matlab';
-%     bhvRootDir = '/grid/churchland/data/data/Behavior_Simon';
-% end
-
+% Define working directories 
 imagingRootDir = S.dir.imagingRootDir;
 codeRootDir = S.dir.codeRootDir;
 bhvRootDir = S.dir.bhvRootDir;
@@ -57,7 +51,7 @@ s2pDataDir = fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir);
 codeDir = fullfile(codeRootDir,'2pAnalysisCode');
 analysisDir = fullfile(imagingRootDir,'analysis'); %directory of the analysis history summary file
 
-addpath(genpath(codeRootDir)); % adds the paths of the code files to be executed
+addpath(genpath(codeRootDir)); % adds the paths of the code files to be executed. Useful on non-local computer such as the server
 
 disp(['%%%%% CURRENT SESSION IS: ' animal ' ' session '. %%%%%']);
 
@@ -75,7 +69,6 @@ disp(['%%%%% CURRENT SESSION IS: ' animal ' ' session '. %%%%%']);
 %     disp('Cannot load session. Please check the session name input.');
 %     analysis.error.behaviorTable = ME.message;
 % end
-
 
 % ----- Logging of analysis ----- %
 if ~exist(fullfile(imagingRootDir,'analysis'),'dir')
@@ -107,6 +100,7 @@ try
         tic
         try
             data = twoP_alignDetectionTask(npy.ops, spks, npy.iscell, npy.redcell, npy.bin_MScan_filepath); % align suite2p data to sensory stimulus
+            data.smoothed = doSmooth;
         catch ME
             data.ME = ME;
         end
@@ -127,13 +121,13 @@ try
 
     % Load behavior data
     disp('LOADING: behavior data...');
-    bhvDir = fullfile(bhvRootDir,animal,bhvSubDir);
-    if length(sFilenames) > 1
-        bhv = twoP_RepairSession(animal,sFilenames,data.trialCodes);
+%     bhvDir = fullfile(bhvRootDir,animal,bhvSubDir);
+    if length(sFilenames) > 1 % if the behavior session was broken into two due to bpod control computer crash
+        [bhv,bhvFilePath] = twoP_RepairSession(animal,sFilenames,data.trialCodes);
     else
-    [bhv,bhvFilePath] = twoP_loadBehaviorSession(animal,session,bhvDir);
+        [bhv,bhvFilePath] = twoP_loadBehaviorSession(animal,session);
     end
-    disp('LOADED: behavior data.');
+    disp(['LOADED: behavior data: ' bhvFilePath]);
     
     suite2pDir = fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir); data.suite2pDir = suite2pDir;
     disp(['Directory of suite2p output: ' suite2pDir]);

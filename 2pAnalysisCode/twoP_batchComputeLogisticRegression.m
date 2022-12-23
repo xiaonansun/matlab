@@ -33,7 +33,7 @@ parfor i = iStart:size(exps,1)
         session = colSession{i};
 
 %         twoP_computeLogisticRegression(animal,session,50);
-        twoP_computeLogisticRegression(animal,session,num_reps,epochs_only,sub_red)
+        twoP_computeLogisticRegression(animal,session,num_reps,epochs_only,sub_red) % MAIN FUNCTION IS HERE!
 %         twoP_aucAnalysisNew(Vc, cBhv, 1, 1, animal, session);
         
     end

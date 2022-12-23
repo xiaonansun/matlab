@@ -1,4 +1,4 @@
-function cmbBhv = twoP_RepairSession(animal,cell_of_filenames,trial_codes)
+function [cmbBhv,cmbFilePath]= twoP_RepairSession(animal,cell_of_filenames,trial_codes)
 
 %% combine behavior
 % basePath = 'G:\Google Drive\Behavior_Simon\PLEX51\SpatialDisc\Session Data\';
@@ -32,7 +32,6 @@ gapBhv = selectBehaviorTrials(SessionData, 1:gapTrials); %add empty trials (this
 gapBhv.DidNotLever = true;
 gapBhv.DidNotChoose = true;
 
-
 bhv1g = appendBehavior(bhv1,gapBhv); %combine bhv data
 
 % [a, b] = fileparts(secondPath);
@@ -44,6 +43,8 @@ bhv2 = selectBehaviorTrials(SessionData,idx2);
 cmbBhv = appendBehavior(bhv1g,bhv2); %combine bhv data
 cmbBhv.nTrials = idx1(end)+idx2(end)+gapTrials;
 cmbBhv.bhv1 = bhv1; cmbBhv.bhv2 = bhv2; cmbBhv.gapBhv = gapBhv;
+
+cmbFilePath = {firstPath secondPath};
 % temp = findstr(b,'_');
 % cFile = [a filesep b(1:temp(end)) 'Combined'];
 % save(cFile, 'SessionData');

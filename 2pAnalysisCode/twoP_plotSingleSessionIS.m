@@ -2,8 +2,7 @@ function twoP_plotSingleSessionIS(animal,session)
 %%
 
 % Constants
-% animal = 'CSP30';
-% session = '200330';
+% animal = 'CSP30'; session = '200330';
 colAnimal = 1;
 colLocation = 3;
 colDepth = 4;
@@ -21,7 +20,8 @@ imagingSubDir = S.dir.imagingSubDir;
 sPerFrame = S.msPerFrame/1000;
 sides = {'Left';'Right'};
 
-Vc = load(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'Vc.mat'),'Vc'); Vc = Vc.Vc;
+% Vc = load(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'Vc.mrat'),'Vc'); Vc = Vc.Vc;
+Vc = load(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'data.mat'),'data'); Vc = Vc.data.sdu;
 cBhv = load(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'cBhv.mat'),'cBhv'); cBhv = cBhv.cBhv;
 idxCell = readNPY(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'iscell.npy'));
 idxRed = readNPY(fullfile(imagingRootDir,animal,'imaging',session,imagingSubDir,'redcell.npy'));

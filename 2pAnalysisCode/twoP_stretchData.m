@@ -1,9 +1,13 @@
 function newVc = twoP_stretchData(Vc)
+% needs to be fixed, the output is a matrix of zeros!!!
 % This function stretches neural data, if needed, such that the duration of a given epoch matches across all trials 
+S=twoP_settings;
+segFrames = S.segFrames;
 
 msPerFrame=32.3638;
 frameRate = 1000/msPerFrame; % Frame rate of imaging
-sRate = frameRate; segFrames = cumsum(floor(segIdx * sRate)); % max nr of frames per segment
+sRate = frameRate; 
+% segFrames = cumsum(floor(segIdx * sRate)); % max nr of frames per segment
 newVc = zeros(size(Vc,1),size(Vc,2),size(Vc,3));
 
 for j = 1:size(Vc,3)

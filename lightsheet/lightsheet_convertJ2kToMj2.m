@@ -9,7 +9,7 @@ clear all;
 % rootDir = 'G:';
 % subDir = dir(rootDir); 
 % subDir = subDir(~ismember({subDir.name},{'.','..'}));
-imgDir = 'F:\lightsheet\Sample_21'; S = regexp(imgDir,filesep,'split');
+imgDir = 'F:\LightsheetBatch2020-10-18\sample_14_tif'; S = regexp(imgDir,filesep,'split');
 vFileName = S{end};
 
 if imgDir(end) ~= filesep

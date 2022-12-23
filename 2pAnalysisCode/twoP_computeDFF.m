@@ -1,4 +1,6 @@
 function dF_traces = twoP_computeDFF(animal,session,interval)
+% Conversion of dF (suite2p output) to dF/F_0
+% This function is current work-in-progress.
 
 %%
 % animal = ; session = ;
