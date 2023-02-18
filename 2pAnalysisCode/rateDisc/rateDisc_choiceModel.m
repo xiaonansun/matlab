@@ -1074,6 +1074,7 @@ clear stimR lGrabR lGrabRelR rGrabR rGrabRelR waterR lLickR rLickR ...
 
 %% run ridge regression in low-D
 % run model. Zero-mean without intercept. only video qr.
+tic
 
 [ridgeVals, dimBeta] = ridgeMML(Vc', fullR, true); %get ridge penalties and beta weights.
 fprintf('Mean ridge penalty for original video, zero-mean model: %f\n', mean(ridgeVals));
@@ -1096,6 +1097,8 @@ fprintf('Mean ridge penalty for original video, spont-motor only model: %f\n', m
 Vm = (spontMotorR * spontMotorBeta)';
 save([cPath 'orgVspontMotor.mat'], 'Vm', 'frames'); %save predicted data based on spont motor model
 
+timer_text = 'Ridge regression completed in: %u seconds\n';
+fprintf(timer_text, round(toc));
 %% run motor/task/opMotor and spontMotor only models. Zero-mean without intercept.
 cIdx = ismember(regIdx(~rejIdx), find(ismember(regLabels,motorLabels))); %get index for motor regressors
 motorLabels = regLabels(sort(find(ismember(regLabels,motorLabels)))); %make sure motorLabels is in the right order

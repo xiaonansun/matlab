@@ -2,7 +2,7 @@
 
 clear all;
 
-animal = 'CSP27'; session = '20200307a';
+animal = 'CSP27'; session = '20200308a';
 % session='28-Mar-2020_1';
 
 S = twoP_settings;
