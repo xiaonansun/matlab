@@ -76,7 +76,7 @@ for i = 1:length(betaIdx)
 end
 
 %% Single neuron beta kernels 
-id_neuron = 63;
+id_neuron = 200;
 s_per_frame = S.msPerFrame/1000;
 figure(3);
 subtitle(animal)
@@ -133,7 +133,7 @@ colormap(colors);
 xlabel('Trials'); ylabel('Neurons'); title('Single-neuron, single-trial cvR^2')
 
 %% Plot single neuron responses
-ranked_id = 501;
+ranked_id = 3;
 id_neuron = sorted_neu_tr_id(ranked_id,1);
 id_trial = sorted_neu_tr_id(ranked_id,2);
 s_per_frame = S.msPerFrame/1000;
@@ -145,9 +145,7 @@ neu_tr_Vm = Vm(id_neuron,trial_frames);
 figure; hold on;
 line(time_vec,neu_tr_Vc);
 line(time_vec,neu_tr_Vm);
-title(['cvR^2 = ' num2str(neu_tr_Rsq(id_neuron,id_trial)) ...
-    ' of neuron #' num2str(id_neuron) ...
-    ', trial #' num2str(id_trial)])
+title(['cvR^2 = ' num2str(neu_tr_Rsq) ' of neuron #' num2str(id_neuron) ' and trial #' num2str(id_trial))])
 
 %% View the single-trial design matrix of one regressor
 % to view regressor names, view regSummaryTable
