@@ -9,11 +9,13 @@ ax.TickLength = [0.02 0.02];
 cnt = 1;
 for i=1:length(ax.Children)
    if strcmpi(ax.Children(i).Type,'line')
+       if ax.Children(i).LineWidth <= 1
        ax.Children(i).LineWidth = 1;
-       if cnt == 1
-           ax.Children(i).Color = 'k';
-           cnt = cnt + 1;
        end
+%        if cnt == 1
+%            ax.Children(i).Color = 'k';
+%            cnt = cnt + 1;
+%        end
    end 
 end
 

@@ -1,7 +1,7 @@
 %% Loads the outputs of the encoding model for further analysis/visualization
 clear all;
-
 animal = 'CSP29'; session = '20200305a';
+% animal = 'Plex50'; session = '200401a';
 lFile={'interpVc'; 'orgdimBeta';'orgfullcorr';'orgregData'};
 
 fileExt='.mat';
@@ -25,7 +25,6 @@ filterFrames=5;
 numOfTaskRegs = 26;
 % regNameIdx=25;
 betaKernel=struct;
-% figure(1);
 taskIdx = [ones(1,numOfTaskRegs) zeros(1,length(regLabels)-numOfTaskRegs)];
 taskBeta = dimBeta(ismember(regIdx,find(taskIdx)),:);
 for regNameIdx = 1:length(regLabels)
@@ -45,34 +44,38 @@ regSummaryTable.Properties.VariableNames = {'RegressorName';'NumOfFrames'};
 %% Unsorted beta kernels
 
 figure(1);
-tiledlayout(floor(sqrt(length(betaIdx))),ceil(sqrt(length(betaIdx))));
+hTile = tiledlayout(floor(sqrt(length(betaIdx))),ceil(sqrt(length(betaIdx))));
+hTile.TileSpacing = 'tight';
 colors = cbrewer('seq','Greys',1024);
 
 % subtitle(animal)
 for i = 1:length(betaIdx)
     nexttile
     regBeta=betaKernel(betaIdx(i)).value;
-   imagesc(regBeta,[median(regBeta(:))-rho*std(regBeta(:)) median(regBeta(:))+rho*std(regBeta(:))]);
+    imagesc(regBeta,[median(regBeta(:))-rho*std(regBeta(:)) median(regBeta(:))+rho*std(regBeta(:))]);
+    if sum(i == 1:hTile.GridSize(2):(hTile.GridSize(1)*hTile.GridSize(2))) == 0; set(gca,'YTickLabel',[]); end % remove y tick labels on all except the first column
     colormap(colors);
     title(regLabels{betaIdx(i)});
 end
 
 %% Sorted beta kernels
 figure(2);
-% suptitle(animal)tiledlayout(floor(sqrt(length(betaIdx))),ceil(sqrt(length(betaIdx))));
-tiledlayout(floor(sqrt(length(betaIdx))),ceil(sqrt(length(betaIdx))));
-
+hTile = tiledlayout(floor(sqrt(length(betaIdx))),ceil(sqrt(length(betaIdx))));
+hTile.TileSpacing = 'tight';
 colors = cbrewer('seq','Greys',1024);
+sPerFrame = S.msPerFrame/1000;
 
 for i = 1:length(betaIdx)
     nexttile
     regBeta=betaKernel(betaIdx(i)).value;
+%     time_vec = 0:sPerFrame:sPerFrame*size(regBeta,2); % time vector
     [~,iM]=max(smoothdata(regBeta,2,'sgolay',filterFrames),[],2);
-    % [M iM]=max(betaKernel,[],2);
     iM=sortrows([iM (1:1:length(iM))'],1);
     imagesc(regBeta(iM(:,2),:),[median(regBeta(:))-rho*std(regBeta(:)) median(regBeta(:))+rho*std(regBeta(:))]);
+    if sum(i == 1:hTile.GridSize(2):(hTile.GridSize(1)*hTile.GridSize(2))) == 0; set(gca,'YTickLabel',[]); end % remove y tick labels on all except the first column
     colormap(colors);
     title(regLabels{betaIdx(i)});
+    fig_configAxis(gca);
 end
 
 %% Single neuron beta kernels 

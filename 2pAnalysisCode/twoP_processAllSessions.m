@@ -49,7 +49,7 @@ parfor i = iStart:size(exps,1)
     %% execute this cell to load one session. Just modify the animal and session variables as needed
     
     if ~exist('N','var') || N == 0
-        animal = 'CSP27'; session = '20200328'; % <---- modify this line to load one session
+        animal = 'Plex51'; session = '200320'; % <---- modify this line to load one session
         procSingleSession = 1;
     else
         animal = colAnimal{i};
