@@ -1,6 +1,6 @@
 function twoP_runEncodingModel(animal,session,dType,cPath,Rec)
 %% Use this script to run the encoding model on a single session.
-% animal = 'Plex51'; session = '200331'; dType = 'twoP'; cPath = 'H:\twoP'; Rec = [];
+% clearvars; animal = 'Plex51'; session = '200326'; dType = 'twoP'; cPath = 'H:\twoP'; Rec = [];
 
 S = twoP_settings;
 [~,behaviorFilePath] = twoP_loadBehaviorSession(animal,session);

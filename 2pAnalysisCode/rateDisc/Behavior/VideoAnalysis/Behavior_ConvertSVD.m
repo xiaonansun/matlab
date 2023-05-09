@@ -26,7 +26,7 @@ bhvOpts.postStimDur = 115/bhvOpts.targRate; % Duration of trial after stimulus o
 bhvOpts.framesPerTrial = round((bhvOpts.preStimDur + bhvOpts.postStimDur) * bhvOpts.targRate); %amount of frames per trial in trial-aligned video data
 bhvOpts.trialDur = bhvOpts.framesPerTrial / bhvOpts.targRate; %amount of frames per trial in trial-aligned video data
 bhvOpts.smth = 5; % filter length when smoothing video data before combined svd
-movType = '.mp4';
+movType = '.mj2';
 
 %% loop through animal data
 paradigms = dir(fPath);

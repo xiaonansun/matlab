@@ -7,10 +7,7 @@ data_path = "H:\lukas\miniscope_data.mat";
 % function [ridgeVals, dimBeta, Vm, fullBeta, fullR, fullIdx, fullRidge, fullLabels, fullMap, fullMovie] = choiceModel_small(iDataPath)
 % Load data
 load(data_path,'frames_per_trial','reg_group_name','reg_idx','X','Y');
-%%
 
-% Vc is the neural data
-% fullR is the design matrix
 %% Cross validation
 % [Vm, fullBeta, fullR, fullIdx, fullRidge, fullLabels, fullMap, fullMovie] = crossValModel(regLabels); % full means both task and motor regressors are included in the cross validation
 % regLabels = cellstr(reg_group_name);

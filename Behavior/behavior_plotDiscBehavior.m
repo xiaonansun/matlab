@@ -1,6 +1,6 @@
 %%
 close all;
-Animal = 'CSP30';
+Animal = 'Plex62';
 cPath = '\\grid-hs\churchland_nlsas_data\data\Behavior_Simon\';
 [Performance,bhv] = DelayedLoc_learningCurves(Animal,cPath);
 disp([Animal '. Detection sessions: ' num2str(sum(sum(Performance.Detection>0))) '; Discrimination Sessions: ' num2str(sum(sum(Performance.Discrimination>0)))]);
