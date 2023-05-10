@@ -101,6 +101,7 @@ X = bsxfun(@rdivide, X, XStd);
 if computeL || recenter
   XMean = mean(X, 1);
   X = bsxfun(@minus, X, XMean);
+  X(isnan(X)) = 0;
 end
 
 
@@ -210,6 +211,7 @@ if nargout > 1
   
   % Adjust betas to account for renorming.
   betas = bsxfun(@rdivide, betas, renorm);
+  betas(isnan(betas)) = 0;
 end
 
 
