@@ -1076,6 +1076,12 @@ clear stimR lGrabR lGrabRelR rGrabR rGrabRelR waterR lLickR rLickR ...
 % run model. Zero-mean without intercept. only video qr.
 tic
 
+cellIdx_exclude = sum(Vc.^2,2)==0;
+if sum(cellIdx_exclude) >= 1
+    Vc(cellIdx_exclude,:) = [];
+    save([cPath 'excluded_cells.mat'], 'cellIdx_exclude');
+end
+
 [ridgeVals, dimBeta] = ridgeMML(Vc', fullR, true); %get ridge penalties and beta weights.
 fprintf('Mean ridge penalty for original video, zero-mean model: %f\n', mean(ridgeVals));
 save([cPath 'orgdimBeta.mat'], 'dimBeta', 'ridgeVals');
