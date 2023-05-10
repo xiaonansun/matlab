@@ -4,7 +4,7 @@ function twoP_runEncodingModel(animal,session,dType,cPath,Rec)
 % clearvars; animal = 'Plex51'; session = '200331'; 
 % 
 
-dType = 'twoP'; cPath = 'H:\twoP'; Rec = [];
+% dType = 'twoP'; cPath = 'H:\twoP'; Rec = [];
 S = twoP_settings;
 [~,behaviorFilePath] = twoP_loadBehaviorSession(animal,session);
 twoPdataDir= fullfile(S.dir.imagingRootDir,animal,'imaging',session,S.dir.imagingSubDir);
