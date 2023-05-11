@@ -1,7 +1,7 @@
 function twoP_runEncodingModel(animal,session,dType,cPath,Rec)
 %% Use this script to run the encoding model on a single session.
 % clearvars; animal = 'Plex51'; session = '200326'; % corrupt video file
-% clearvars; animal = 'Plex51'; session = '200331'; 
+% clearvars; animal = 'Plex50'; session = '200402a'; 
 % 
 
 % dType = 'twoP'; cPath = 'H:\twoP'; Rec = [];

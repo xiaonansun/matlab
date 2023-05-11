@@ -1076,7 +1076,7 @@ clear stimR lGrabR lGrabRelR rGrabR rGrabRelR waterR lLickR rLickR ...
 % run model. Zero-mean without intercept. only video qr.
 tic
 
-cellIdx_exclude = sum(Vc.^2,2)==0;
+cellIdx_exclude = log(sum(Vc.^2,2)) < 0; % added by Richard: removes cells with near-zero variance
 if sum(cellIdx_exclude) >= 1
     Vc(cellIdx_exclude,:) = [];
     save([cPath 'excluded_cells.mat'], 'cellIdx_exclude');
