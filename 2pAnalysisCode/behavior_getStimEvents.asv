@@ -1,5 +1,5 @@
 function E = behavior_getStimEvents(bhv)
-%% Input: bhv is the Bpod behavior session structure (e.g. SessionData)
+%% Input: bhv is the Bpod behavior session struct (e.g. SessionData)
 
 events = bhv.stimEvents;
 

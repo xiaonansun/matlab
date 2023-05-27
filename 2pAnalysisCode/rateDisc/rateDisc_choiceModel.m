@@ -1,6 +1,6 @@
 function rateDisc_choiceModel(cPath,Animal,Rec,dType,varargin)
 %%
-%   dbstop rateDisc_choiceModel 102
+%   dbstop rateDisc_choiceModelcPath 102
 % Last Updated 2020-12-18: THIS SHOULD BE RUN AS A FUNCTION. 
 % Update 2022-10-26: Richard
 % - added bhvFilePath as an OPTIONAL input variable. As an input, one can directly

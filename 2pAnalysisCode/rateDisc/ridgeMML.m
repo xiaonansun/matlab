@@ -149,7 +149,7 @@ if computeL
   for i = 1:pY
     [L(i), flag] = ridgeMMLOneY(q, d2, n, YVar(i), alpha2(:, i));
     convergenceFailures(i) = (flag < 1);
-%     disp(num2str(i)); % RICHARD: stuck on the 75th iteration
+%     disp(num2str(i)); % RICHARD: uncomment this line for debugging
   end
   
 else
