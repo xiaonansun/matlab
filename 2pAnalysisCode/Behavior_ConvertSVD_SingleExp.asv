@@ -147,24 +147,24 @@ else
                 save([cPath 'segInd' int2str(iCams) '.mat'],'ind'); %save index for later reconstruction
                 
                 %% Check all videos first to ensure none are corrupt
-%                 corruptVideos = false(nrCams,length(movieFiles));
-%                 corruptErrors = cell(nrCams,length(movieFiles));
-%                 movieFileNameList = {movieFiles.name};
-%                 movieFolder = movieFiles(1).folder;
-%                 parfor y = 1:length(movieFiles)
-%                     cFile = fullfile(movieFolder,movieFileNameList{y});
-%                     v = VideoReader(cFile);
-%                     disp(cFile)
-%                     try
-%                     while hasFrame(v)
-%                         frame = readFrame(v);
-%                     end
-%                     catch ME
-%                         corruptVideos(iCams,y) = true;
-%                         corruptErrors{iCams,y} = ME;
-%                     end
-% %                     clear v;
-%                 end
+                corruptVideos = false(nrCams,length(movieFiles));
+                corruptErrors = cell(nrCams,length(movieFiles));
+                movieFileNameList = {movieFiles.name};
+                movieFolder = movieFiles(1).folder;
+                parfor y = 1:length(movieFiles)
+                    cFile = fullfile(movieFolder,movieFileNameList{y});
+                    v = VideoReader(cFile);
+                    disp(cFile)
+                    try
+                    while hasFrame(v)
+                        frame = readFrame(v);
+                    end
+                    catch ME
+                        corruptVideos(iCams,y) = true;
+                        corruptErrors{iCams,y} = ME;
+                    end
+%                     clear v;
+                end
                 
                 %% determine how often to load raw data given available memory
                 info = whos('singleFrame');

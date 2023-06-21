@@ -1,6 +1,6 @@
 function rateDisc_choiceModel(cPath,Animal,Rec,dType,varargin)
 %%
-%   dbstop rateDisc_choiceModel 102
+%   dbstop rateDisc_choiceModelcPath 102
 % Last Updated 2020-12-18: THIS SHOULD BE RUN AS A FUNCTION. 
 % Update 2022-10-26: Richard
 % - added bhvFilePath as an OPTIONAL input variable. As an input, one can directly
@@ -1075,6 +1075,12 @@ clear stimR lGrabR lGrabRelR rGrabR rGrabRelR waterR lLickR rLickR ...
 %% run ridge regression in low-D
 % run model. Zero-mean without intercept. only video qr.
 tic
+
+cellIdx_exclude = log(sum(Vc.^2,2)) < 0; % added by Richard: removes cells with near-zero variance
+if sum(cellIdx_exclude) >= 1
+    Vc(cellIdx_exclude,:) = [];
+    save([cPath 'excluded_cells.mat'], 'cellIdx_exclude');
+end
 
 [ridgeVals, dimBeta] = ridgeMML(Vc', fullR, true); %get ridge penalties and beta weights.
 fprintf('Mean ridge penalty for original video, zero-mean model: %f\n', mean(ridgeVals));
