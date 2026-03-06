@@ -8,8 +8,7 @@
 %% Loading kilosort data
 clear all; close all;
 
-code_dir = 'C:\Users\Xiaonan Richard Sun\GitHub\spikes';
-addpath(genpath(code_dir));
+co
 
 myKsDir = 'G:\simon_ephys\Optotest4\_spikeglx_ephysData_probe00_g0';
 myKsDirParts = regexp(myKsDir,filesep,'split');
